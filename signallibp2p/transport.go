@@ -2,6 +2,7 @@ package signallibp2p
 
 import (
 	"context"
+	"fmt"
 	"net"
 
 	"github.com/Luca3317/libsignalcopy/protocol"
@@ -32,6 +33,7 @@ type Transport struct {
 
 // probably very unfinished, depends on struct
 func New(privKey crypto.PrivKey) (*Transport, error) {
+	fmt.Printf("OK\n\n BIN HIER!!!!!!!!!!!!!!!!!!! \n}\n")
 	localID, err := peer.IDFromPrivateKey(privKey)
 	if err != nil {
 		return nil, err
