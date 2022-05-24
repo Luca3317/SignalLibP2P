@@ -8,6 +8,7 @@ import (
 	"github.com/Luca3317/libsignalcopy/protocol"
 	"github.com/Luca3317/libsignalcopy/serialize"
 	"github.com/Luca3317/libsignalcopy/session"
+	"github.com/Luca3317/libsignalcopy/util/retrievable"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/sec"
@@ -29,6 +30,8 @@ type Transport struct {
 	identityStore     *InMemoryIdentityKey
 
 	sessionBuilder session.Builder
+
+	serializer serialize.Serializer
 }
 
 // probably very unfinished, depends on struct
@@ -39,9 +42,17 @@ func New(privKey crypto.PrivKey) (*Transport, error) {
 		return nil, err
 	}
 
+	// TODO
+	// prior, generate localregisrtation id and use as input for identitykeystore
+	serializer := serialize.NewJSONSerializer()
 	return &Transport{
-		localID:    localID,
-		privateKey: privKey,
+		localID:           localID,
+		privateKey:        privKey,
+		sessionStore:      NewInMemorySession(serializer),
+		preKeyStore:       NewInMemoryPreKey(),
+		signedPreKeyStore: NewInMemorySignedPreKey(),
+		identityStore:     NewInMemoryIdentityKey(retrievable.ConvertIDKeysLibp2pToSig(privKey.GetPublic(), privKey), 0),
+		serializer:        *serializer,
 	}, nil
 }
 
