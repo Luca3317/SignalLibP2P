@@ -15,7 +15,7 @@ import (
 
 func Handshake(tpt *Transport, retrieved *retrievable.Retrievable) error {
 
-	fmt.Printf("testing processbundle")
+	fmt.Printf("\n\ntesting processbundle\n\n")
 
 	prekeys, _ := keyhelper.GeneratePreKeys(0, 10, serialize.NewJSONSerializer().PreKeyRecord)
 	idkeypair, _ := keyhelper.GenerateIdentityKeyPair()
