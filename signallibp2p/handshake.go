@@ -27,7 +27,7 @@ func Handshake(tpt *Transport, retrieved *retrievable.Retrievable) error {
 	tpt.buildSession(protocol.NewSignalAddress("name "+strconv.Itoa((int)(retrievedBundle.RegistrationID())), retrievedBundle.DeviceID()), serialize.NewJSONSerializer())
 	err := tpt.sessionBuilder.ProcessBundle(retrievedBundle)
 	if err != nil {
-		log.Fatal("this part failed")
+		log.Fatal("this part failed", err)
 	} else {
 		log.Fatal("it worked huh so far so ogofdodoadfnasd")
 	}
