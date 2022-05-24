@@ -2,6 +2,7 @@ package signallibp2p
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 
@@ -12,6 +13,8 @@ import (
 )
 
 func Handshake(tpt *Transport, retrieved *retrievable.Retrievable) error {
+
+	fmt.Printf("\n\n UP TO \n DATE\n\n")
 
 	retrievedBundle := prekey.NewBundle(
 		retrieved.Ids.RegID,
