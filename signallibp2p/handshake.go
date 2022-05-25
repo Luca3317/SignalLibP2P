@@ -35,7 +35,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 	bundle := prekey.NewBundle(
 		ret.Ids.RegID, ret.Ids.DevID,
 		ret.PreKey.ID(), ret.SignedPreKey.ID(),
-		ret.PreKey.KeyPair().PublicKey(), ret.PreKey.KeyPair().PublicKey(),
+		ret.PreKey.KeyPair().PublicKey(), ret.SignedPreKey.KeyPair().PublicKey(),
 		ret.SignedPreKey.Signature(), ret.IdentityKeyPair.PublicKey(),
 	)
 
