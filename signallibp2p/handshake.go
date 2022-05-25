@@ -1,6 +1,7 @@
 package signallibp2p
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -9,57 +10,39 @@ import (
 	"github.com/Luca3317/libsignalcopy/keys/prekey"
 	"github.com/Luca3317/libsignalcopy/protocol"
 	"github.com/Luca3317/libsignalcopy/serialize"
-	"github.com/Luca3317/libsignalcopy/util/retrievable"
+	"github.com/Luca3317/libsignalcopy/session"
 )
 
-func Handshake(tpt *Transport, retrieved *retrievable.Retrievable) error {
-
-	fmt.Printf("\n\n UP TO \n DATE\n\n")
-
-	retrievedBundle := prekey.NewBundle(
-		retrieved.Ids.RegID,
-		retrieved.Ids.DevID,
-		retrieved.PreKey.ID(),
-		retrieved.SignedPreKey.ID(),
-		retrieved.PreKey.KeyPair().PublicKey(),
-		retrieved.SignedPreKey.KeyPair().PublicKey(),
-		retrieved.SignedPreKey.Signature(),
-		retrievable.ConvertIDKeysLibp2pToSig(retrieved.IdentityKeyPairPub, retrieved.IdentityKeyPairPriv).PublicKey(),
-	)
-
-	tpt.buildSession(protocol.NewSignalAddress("name "+strconv.Itoa((int)(retrievedBundle.RegistrationID())), retrievedBundle.DeviceID()), serialize.NewJSONSerializer())
-	err := tpt.sessionBuilder.ProcessBundle(retrievedBundle)
+func (s *signalSession) Handshake(ctx context.Context) (err error) {
+	_, err = CreateBundleRaw()
 	if err != nil {
-		log.Fatal("this part failed", err)
-	} else {
-		log.Fatal("it worked huh so far so ogofdodoadfnasd")
+		log.Fatal("failed to create bundle")
+	}
+	ret, err := ReadBundle()
+	if err != nil {
+		log.Fatal("failed to create bundle")
 	}
 
-	/* 	This works; processbundle not the problem
-	   	fmt.Printf("\n\ntesting processbundle\n\n")
+	builder := session.NewBuilder(
+		NewInMemorySession(serialize.NewJSONSerializer()),
+		NewInMemoryPreKey(), NewInMemorySignedPreKey(),
+		NewInMemoryIdentityKey(&ret.IdentityKeyPair, ret.Ids.RegID),
+		protocol.NewSignalAddress("kaka "+strconv.Itoa(int(ret.Ids.RegID)), ret.Ids.DevID),
+		serialize.NewJSONSerializer(),
+	)
 
-	   	prekeys, _ := keyhelper.GeneratePreKeys(0, 10, serialize.NewJSONSerializer().PreKeyRecord)
-	   	idkeypair, _ := keyhelper.GenerateIdentityKeyPair()
-	   	sigprekey, _ := keyhelper.GenerateSignedPreKey(idkeypair, 0, serialize.NewJSONSerializer().SignedPreKeyRecord)
+	bundle := prekey.NewBundle(
+		ret.Ids.RegID, ret.Ids.DevID,
+		ret.PreKey.ID(), ret.SignedPreKey.ID(),
+		ret.PreKey.KeyPair().PublicKey(), ret.PreKey.KeyPair().PublicKey(),
+		ret.SignedPreKey.Signature(), ret.IdentityKeyPair.PublicKey(),
+	)
 
-	   	retrievedBundle := prekey.NewBundle(
-	   		keyhelper.GenerateRegistrationID(),
-	   		12,
-	   		prekeys[0].ID(),
-	   		sigprekey.ID(),
-	   		prekeys[0].KeyPair().PublicKey(),
-	   		sigprekey.KeyPair().PublicKey(),
-	   		sigprekey.Signature(),
-	   		idkeypair.PublicKey(),
-	   	)
+	err = builder.ProcessBundle(bundle)
+	if err != nil {
+		log.Fatal("failll")
+	}
+	fmt.Printf("Ayooo")
 
-	   	tpt.buildSession(protocol.NewSignalAddress("name "+strconv.Itoa((int)(retrievedBundle.RegistrationID())), retrievedBundle.DeviceID()), serialize.NewJSONSerializer())
-	   	err := tpt.sessionBuilder.ProcessBundle(retrievedBundle)
-	   	if err != nil {
-	   		log.Fatal("this part failed", err)
-	   	} else {
-	   		log.Fatal("it worked huh so far so ogofdodoadfnasd")
-	   	} */
-
-	return errors.New("not implemented!")
+	return errors.New("not implemetned")
 }

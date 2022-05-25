@@ -1,11 +1,14 @@
 package signallibp2p
 
 import (
+	groupRecord "github.com/Luca3317/libsignalcopy/groups/state/record"
 	"github.com/Luca3317/libsignalcopy/keys/identity"
 	"github.com/Luca3317/libsignalcopy/protocol"
 	"github.com/Luca3317/libsignalcopy/serialize"
 	"github.com/Luca3317/libsignalcopy/state/record"
 )
+
+// Define some in-memory stores for testing.
 
 // IdentityKeyStore
 func NewInMemoryIdentityKey(identityKey *identity.KeyPair, localRegistrationID uint32) *InMemoryIdentityKey {
@@ -155,4 +158,22 @@ func (i *InMemorySignedPreKey) ContainsSignedPreKey(signedPreKeyID uint32) bool 
 
 func (i *InMemorySignedPreKey) RemoveSignedPreKey(signedPreKeyID uint32) {
 	delete(i.store, signedPreKeyID)
+}
+
+func NewInMemorySenderKey() *InMemorySenderKey {
+	return &InMemorySenderKey{
+		store: make(map[*protocol.SenderKeyName]*groupRecord.SenderKey),
+	}
+}
+
+type InMemorySenderKey struct {
+	store map[*protocol.SenderKeyName]*groupRecord.SenderKey
+}
+
+func (i *InMemorySenderKey) StoreSenderKey(senderKeyName *protocol.SenderKeyName, keyRecord *groupRecord.SenderKey) {
+	i.store[senderKeyName] = keyRecord
+}
+
+func (i *InMemorySenderKey) LoadSenderKey(senderKeyName *protocol.SenderKeyName) *groupRecord.SenderKey {
+	return i.store[senderKeyName]
 }
