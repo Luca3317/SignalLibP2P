@@ -11,14 +11,15 @@ import (
 	"github.com/Luca3317/libsignalcopy/protocol"
 	"github.com/Luca3317/libsignalcopy/serialize"
 	"github.com/Luca3317/libsignalcopy/session"
+	"github.com/Luca3317/libsignalcopy/util/retrievable"
 )
 
-func (s *signalSession) Handshake(ctx context.Context) (err error) {
-	_, err = CreateBundleRaw()
+func Handshake(ctx context.Context) (err error) {
+	_, err = retrievable.CreateBundleRaw()
 	if err != nil {
 		log.Fatal("failed to create bundle")
 	}
-	ret, err := ReadBundle()
+	ret, err := retrievable.ReadBundle()
 	if err != nil {
 		log.Fatal("failed to create bundle")
 	}
