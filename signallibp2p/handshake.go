@@ -67,8 +67,8 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		// TODO: maybe use own encrypt function here already
 		plaintextMessage := []byte("Hello!")
 		logger.Info("Plaintext message: ", string(plaintextMessage))
-		sessionCipher := session.NewCipher(builder, remoteAddress)
-		message, err := sessionCipher.Encrypt(plaintextMessage)
+		s.sessionCipher = session.NewCipher(builder, remoteAddress)
+		message, err := s.sessionCipher.Encrypt(plaintextMessage)
 		if err != nil {
 			log.Fatal("\nFailed to encrypt message:\n", err)
 		}
