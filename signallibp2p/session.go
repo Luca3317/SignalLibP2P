@@ -3,17 +3,16 @@ package signallibp2p
 import (
 	"bufio"
 	"context"
-	"encoding/binary"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/Luca3317/libsignalcopy/logger"
+	"github.com/Luca3317/libsignalcopy/protocol"
+	"github.com/Luca3317/libsignalcopy/serialize"
 	"github.com/Luca3317/libsignalcopy/session"
-	pool "github.com/libp2p/go-buffer-pool"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"golang.org/x/crypto/poly1305"
 )
 
 type signalSession struct {
@@ -137,7 +136,7 @@ func (s *signalSession) Write(buf []byte) (int, error) {
 	return s.writeMsgInsecure(buf)
 }
 
-/* 
+/*
 // Copied straight from noise
 // Read reads from the secure connection, returning plaintext data in `buf`.
 // Honours io.Reader in terms of behaviour.
@@ -249,5 +248,5 @@ func (s *signalSession) Write(data []byte) (int, error) {
 		}
 		written = end
 	}
-	return written, nil */
-}
+	return written, nil
+}*/
