@@ -70,12 +70,12 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 
 		logger.Info("\nEncrypted message:\n", message)
-		_, err = s.writeMsgInsecure(message.Serialize())
+		i, err := s.writeMsgInsecure(message.Serialize())
 		if err != nil {
 			log.Fatal("\nFailed to write message:\n", err)
 		}
 
-		logger.Info("\n\nSO FAR SO GOOD\n\n")
+		logger.Info("\n\nSO FAR SO GOOD; wrote ", i, "bytes\n\n")
 
 	} else {
 
