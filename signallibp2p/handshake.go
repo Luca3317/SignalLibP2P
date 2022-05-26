@@ -77,6 +77,10 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 		logger.Info("\n\nSO FAR SO GOOD; wrote ", i, "bytes\n\n")
 
+		for {
+			logger.Info(".")
+		}
+
 	} else {
 
 		// Receiver session creation
@@ -104,10 +108,6 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 
 		logger.Info("\n\nSO FAR SO GOOD 2\n\n")
-
-		for {
-			logger.Info(".")
-		}
 
 	}
 
