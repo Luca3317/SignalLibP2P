@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"strconv"
 
 	"github.com/Luca3317/libsignalcopy/keys/prekey"
@@ -17,7 +18,8 @@ import (
 
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
-	logger.Info("\nUSING UPDATED\n")
+	logger.Info("\nUSING UPDATED\nHeres the stack")
+	debug.PrintStack()
 
 	if s.initiator {
 
