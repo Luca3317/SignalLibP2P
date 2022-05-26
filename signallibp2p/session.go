@@ -100,9 +100,9 @@ func (s *signalSession) Close() error {
 }
 
 func (s *signalSession) Read(buf []byte) (int, error) {
-	return 0, errors.New("not implemented!")
+	return 0, errors.New("not implementedoooh shit!")
 }
 
 func (s *signalSession) Write(data []byte) (int, error) {
-	return 0, errors.New("not implemented!")
+	return 0, errors.New("not implementedcmooon!")
 }
