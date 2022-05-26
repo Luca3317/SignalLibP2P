@@ -114,10 +114,7 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 		return 0, err
 	}
 
-	message, err = protocol.NewPreKeySignalMessageFromBytes(
-		buf, serialize.NewJSONSerializer().PreKeySignalMessage,
-		serialize.NewJSONSerializer().SignalMessage,
-	)
+	message, err := protocol.NewSignalMessageFromBytes(buf, serialize.NewJSONSerializer().SignalMessage)
 	if err != nil {
 		logger.Debug("\nfailed to make message\n")
 		return 0, err
@@ -129,7 +126,8 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 		return 0, err
 	}
 
-	return 0, plaintext
+	copy(buf, plaintext)
+	return 0, nil
 }
 
 func (s *signalSession) Write(buf []byte) (int, error) {
