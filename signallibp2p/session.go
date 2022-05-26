@@ -1,6 +1,7 @@
 package signallibp2p
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"net"
@@ -22,16 +23,15 @@ type signalSession struct {
 	readLock  sync.Mutex
 	writeLock sync.Mutex
 
-	insecureConn net.Conn
-	// insecureReader *bufio.Reader // to cushion io read syscalls
+	insecureConn   net.Conn
+	insecureReader *bufio.Reader // to cushion io read syscalls
 	// we don't buffer writes to avoid introducing latency; optimisation possible. // TODO revisit
 
-	/* 	qseek int     // queued bytes seek value.
-	   	qbuf  []byte  // queued bytes buffer.
-	   	rlen  [2]byte // work buffer to read in the incoming message length.
-
-	   	enc *noise.CipherState
-	   	dec *noise.CipherState */
+	// TODO: these are for the insecure rw fucntions
+	// which might be wrong for signal
+	qseek int     // queued bytes seek value.
+	qbuf  []byte  // queued bytes buffer.
+	rlen  [2]byte // work buffer to read in the incoming message length.
 }
 
 // TODO
@@ -39,11 +39,12 @@ type signalSession struct {
 func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, remote peer.ID, initiator bool) (*signalSession, error) {
 
 	s := &signalSession{
-		insecureConn: insecure,
-		initiator:    initiator,
-		localID:      tpt.localID,
-		localKey:     tpt.privateKey,
-		remoteID:     remote,
+		insecureConn:   insecure,
+		insecureReader: bufio.NewReader(insecure),
+		initiator:      initiator,
+		localID:        tpt.localID,
+		localKey:       tpt.privateKey,
+		remoteID:       remote,
 	}
 
 	s.Handshake(ctx)

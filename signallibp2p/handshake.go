@@ -13,6 +13,7 @@ import (
 	"github.com/Luca3317/libsignalcopy/serialize"
 	"github.com/Luca3317/libsignalcopy/session"
 	"github.com/Luca3317/libsignalcopy/util/retrievable"
+	pool "github.com/libp2p/go-buffer-pool"
 )
 
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
@@ -63,12 +64,38 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		sessionCipher := session.NewCipher(builder, remoteAddress)
 		message, err := sessionCipher.Encrypt(plaintextMessage)
 		if err != nil {
-			log.Fatal("Failed to encrypt message: ", err)
+			log.Fatal("\nFailed to encrypt message:\n", err)
 		}
 
-		logger.Info("encrypted message: ", message)
+		logger.Info("\nEncrypted message:\n", message)
+		_, err = s.writeMsgInsecure(message.Serialize())
+		if err != nil {
+			log.Fatal("\nFailed to write message:\n", err)
+		}
 
 	} else {
+
+		// Receiver session creation
+		mlen, err := s.readNextInsecureMsgLen()
+		if err != nil {
+			log.Fatal("\nFailed to read message len:\n", err)
+		}
+
+		hbuf := pool.Get(mlen)
+		defer pool.Put(hbuf)
+
+		err = s.readNextMsgInsecure(hbuf)
+		if err != nil {
+			log.Fatal("\nFailed to read message:\n", err)
+		}
+
+		_, err = protocol.NewPreKeySignalMessageFromBytes(
+			hbuf, serialize.NewJSONSerializer().PreKeySignalMessage,
+			serialize.NewJSONSerializer().SignalMessage,
+		)
+		if err != nil {
+			log.Fatal("\nFailed to make prekeysignalmessage from bytes:\n", err)
+		}
 
 	}
 
