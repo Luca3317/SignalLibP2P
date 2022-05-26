@@ -2,7 +2,6 @@ package signallibp2p
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -77,10 +76,6 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 		logger.Info("\n\nSO FAR SO GOOD; wrote ", i, "bytes\n\n")
 
-		for {
-			logger.Info(".")
-		}
-
 	} else {
 
 		// Receiver session creation
@@ -111,5 +106,5 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 	}
 
-	return errors.New("not implemetned")
+	return nil
 }

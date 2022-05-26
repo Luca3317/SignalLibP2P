@@ -47,9 +47,12 @@ func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, re
 		remoteID:       remote,
 	}
 
-	s.Handshake(ctx)
+	err := s.Handshake(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, errors.New("not implemented!")
+	return s, nil
 }
 
 func (s *signalSession) LocalAddr() net.Addr {
