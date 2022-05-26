@@ -18,6 +18,8 @@ import (
 
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
+	logger.Info("\nUSING UPDATED\n")
+
 	if s.initiator {
 
 		// Step 0 (TODO: Remove): Generate necessary data
@@ -73,7 +75,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			log.Fatal("\nFailed to write message:\n", err)
 		}
 
-		fmt.Printf("\n\nSO FAR SO GOOD\n\n")
+		logger.Info("\n\nSO FAR SO GOOD\n\n")
 
 	} else {
 
@@ -86,7 +88,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		hbuf := pool.Get(mlen)
 		defer pool.Put(hbuf)
 
-		fmt.Printf("\n\nSO FAR SO GOOD, mlen : %v\n\n", mlen)
+		logger.Info("\n\nSO FAR SO GOOD, mlen: ", mlen, "\n\n")
 
 		err = s.readNextMsgInsecure(hbuf)
 		if err != nil {
@@ -101,7 +103,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			log.Fatal("\nFailed to make prekeysignalmessage from bytes:\n", err)
 		}
 
-		fmt.Printf("\n\nSO FAR SO GOOD 2\n\n")
+		logger.Info("\n\nSO FAR SO GOOD 2\n\n")
 
 	}
 
