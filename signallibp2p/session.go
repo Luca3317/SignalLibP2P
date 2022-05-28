@@ -110,19 +110,19 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 
 	err := s.readNextMsgInsecure(buf)
 	if err != nil {
-		logger.Debug("\nfailed to read safely\n")
+		logger.Debug("\nfailed to read safely\n", err, "\n")
 		return 0, err
 	}
 
 	message, err := protocol.NewSignalMessageFromBytes(buf, serialize.NewJSONSerializer().SignalMessage)
 	if err != nil {
-		logger.Debug("\nfailed to make message\n")
+		logger.Debug("\nfailed to make message\n", err, "\n")
 		return 0, err
 	}
 
 	plaintext, err := s.sessionCipher.Decrypt(message)
 	if err != nil {
-		logger.Debug("\nfailed to decrypt message\n")
+		logger.Debug("\nfailed to decrypt message\n", err, "\n")
 		return 0, err
 	}
 
