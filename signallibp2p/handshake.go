@@ -14,23 +14,14 @@ import (
 	"github.com/Luca3317/libsignalcopy/session"
 	"github.com/Luca3317/libsignalcopy/util/retrievable"
 	pool "github.com/libp2p/go-buffer-pool"
-	"github.com/libp2p/go-libp2p-core/crypto"
 )
 
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
-
-	_, s.remoteKey, _ = crypto.GenerateKeyPair(crypto.RSA, 2048)
 
 	logger.Info("\nUSING UPDATED\nHeres the stack")
 	debug.PrintStack()
 
 	if s.initiator {
-
-		// Step 0 (TODO: Remove): Generate necessary data
-		_, err = retrievable.CreateBundleRaw()
-		if err != nil {
-			log.Fatal("failed to create bundle")
-		}
 
 		// Step 1: Create PreKey Bundle (as well as session builder)
 		ret, err := retrievable.ReadBundle()
