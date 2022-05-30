@@ -2,7 +2,9 @@ package signallibp2p
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 	"runtime/debug"
 	"strconv"
 
@@ -15,9 +17,16 @@ import (
 	pool "github.com/libp2p/go-buffer-pool"
 )
 
-func (s *signalSession) Handshake(ctx context.Context) error {
+func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
-	logger.Debug(debug.Stack())
+	defer func() {
+		if rerr := recover(); rerr != nil {
+			fmt.Fprintf(os.Stderr, "caught panic: %s\n%s\n", rerr, debug.Stack())
+			err = fmt.Errorf("panic in Signal handshake: %s", rerr)
+		}
+	}()
+
+	//	logger.Debug(debug.Stack())
 
 	//serializer := serialize.NewJSONSerializer()
 

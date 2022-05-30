@@ -49,12 +49,28 @@ func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, re
 		remoteID:       remote,
 	}
 
-	err := s.Handshake(ctx)
-	if err != nil {
-		return nil, err
-	}
+	// the go-routine we create to run the handshake will
+	// write the result of the handshake to the respCh.
+	respCh := make(chan error, 1)
+	go func() {
+		respCh <- s.Handshake(ctx)
+	}()
 
-	return s, nil
+	select {
+	case err := <-respCh:
+		if err != nil {
+			_ = s.insecureConn.Close()
+		}
+		return s, err
+
+	case <-ctx.Done():
+		// If the context has been cancelled, we close the underlying connection.
+		// We then wait for the handshake to return because of the first error it encounters
+		// so we don't return without cleaning up the go-routine.
+		_ = s.insecureConn.Close()
+		<-respCh
+		return nil, ctx.Err()
+	}
 }
 
 func (s *signalSession) LocalAddr() net.Addr {
