@@ -30,6 +30,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			log.Fatal("failed to create bundle")
 		}
 
+		logger.Debug("\nrestoring key\n")
 		keybytes, err := retrievable.ReadLibP2PKeys()
 		if err != nil {
 			log.Fatal("failed to read libp2p key\n", err)
