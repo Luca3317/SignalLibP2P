@@ -19,7 +19,7 @@ func (s *signalSession) Handshake(ctx context.Context) error {
 
 	logger.Debug(debug.Stack())
 
-	serializer := serialize.NewJSONSerializer()
+	//serializer := serialize.NewJSONSerializer()
 
 	// If youre the dialer
 	if s.initiator {
