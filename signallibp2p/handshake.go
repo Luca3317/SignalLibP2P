@@ -2,25 +2,31 @@ package signallibp2p
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"runtime/debug"
-	"strconv"
-
-	"github.com/Luca3317/libsignalcopy/keys/prekey"
-	"github.com/Luca3317/libsignalcopy/logger"
-	"github.com/Luca3317/libsignalcopy/protocol"
-	"github.com/Luca3317/libsignalcopy/serialize"
-	"github.com/Luca3317/libsignalcopy/session"
-	"github.com/Luca3317/libsignalcopy/util/retrievable"
-	pool "github.com/libp2p/go-buffer-pool"
-	"github.com/libp2p/go-libp2p-core/crypto"
+	"errors"
 )
 
-func (s *signalSession) Handshake(ctx context.Context) (err error) {
+func (s *signalSession) Handshake(ctx context.Context) error {
+
+	return errors.New("not implemented yet!")
+}
+
+/* func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 	logger.Info("\nUSING UPDATED\nHeres the stack")
 	debug.PrintStack()
+
+	logger.Debug("\nrestoring key\n")
+	keybytes, err := retrievable.ReadLibP2PKeys()
+	if err != nil {
+		log.Fatal("failed to read libp2p key\n", err)
+	}
+	key, err := crypto.UnmarshalPublicKey(keybytes)
+	if err != nil {
+		log.Fatal("failed to unmarshal libp2p key\n", err)
+	}
+	s.remoteKey = key
+
+	retrievable.SaveLibP2PKey(s.LocalPublicKey())
 
 	if s.initiator {
 
@@ -29,17 +35,6 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		if err != nil {
 			log.Fatal("failed to create bundle")
 		}
-
-		logger.Debug("\nrestoring key\n")
-		keybytes, err := retrievable.ReadLibP2PKeys()
-		if err != nil {
-			log.Fatal("failed to read libp2p key\n", err)
-		}
-		key, err := crypto.UnmarshalPublicKey(keybytes)
-		if err != nil {
-			log.Fatal("failed to unmarshal libp2p key\n", err)
-		}
-		s.remoteKey = key
 
 		bundle := prekey.NewBundle(
 			ret.Ids.RegID, ret.Ids.DevID,
@@ -86,6 +81,18 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 	} else {
 
+		pubkeybytes, err := retrievable.ReadLibP2PKeys()
+		if err != nil {
+			log.Fatal("failed to read libp2p keys\n", err)
+		}
+
+		pubkey, err := crypto.UnmarshalPublicKey(pubkeybytes)
+		if err != nil {
+			log.Fatal("failed to unmarshal key\n", err)
+		}
+
+		s.remoteKey = pubkey
+
 		// Receiver session creation
 		mlen, err := s.readNextInsecureMsgLen()
 		if err != nil {
@@ -115,4 +122,4 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 	}
 
 	return nil
-}
+} */

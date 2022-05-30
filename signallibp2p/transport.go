@@ -11,6 +11,8 @@ import (
 
 const ID = "/signal"
 
+var _ sec.SecureTransport = &Transport{}
+
 type Transport struct {
 	localID    peer.ID
 	privateKey crypto.PrivKey
