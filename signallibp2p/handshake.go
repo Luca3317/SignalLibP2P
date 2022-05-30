@@ -34,7 +34,7 @@ func (s *signalSession) Handshake(ctx context.Context) error {
 
 		retrieved, err := retrievable.ReadBundle()
 		if err != nil {
-			logger.Debug("\nHandshake-Dialer\nReturning; Failed to ReadBundle!\n")
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to ReadBundle!\n", err, "\n")
 			return err
 		}
 
@@ -63,7 +63,7 @@ func (s *signalSession) Handshake(ctx context.Context) error {
 		logger.Debug("\nHandshake-Dialer\nBuilding Dialers session using ProcessBundle\n")
 		err = builder.ProcessBundle(retrievedPreKeyBundle)
 		if err != nil {
-			logger.Debug("\nHandshake-Dialer\nReturning; Failed to ProcessBundle!\n")
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to ProcessBundle!\n", err, "\n")
 			return err
 		}
 
@@ -75,7 +75,7 @@ func (s *signalSession) Handshake(ctx context.Context) error {
 		plainText := []byte("TestMessage")
 		cipherText, err := s.sessionCipher.Encrypt(plainText)
 		if err != nil {
-			logger.Debug("\nHandshake-Dialer\nReturning; SessionCipher Test failed!\n")
+			logger.Debug("\nHandshake-Dialer\nReturning; SessionCipher Test failed!\n", err, "\n")
 			return err
 		} else {
 			logger.Debug("\nHandshake-Dialer\nPlainText: ", plainText, "; CipherText: ", cipherText, "\n")
@@ -87,7 +87,7 @@ func (s *signalSession) Handshake(ctx context.Context) error {
 
 		i, err := s.writeMsgInsecure(cipherText.Serialize())
 		if err != nil {
-			logger.Debug("\nHandshake-Dialer\nReturning; Failed to write message!\n")
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to write message!\n", err, "\n")
 			return err
 		}
 
@@ -98,7 +98,7 @@ func (s *signalSession) Handshake(ctx context.Context) error {
 		logger.Debug("\nStarting Handshake-Listener\nwith partner ", s.remoteID, "\n")
 		mlen, err := s.readNextInsecureMsgLen()
 		if err != nil {
-			logger.Debug("\nHandshake-Dialer\nReturning; Failed to readNextInsecureMsgLen!\n")
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to readNextInsecureMsgLen!\n", err, "\n")
 			return err
 		}
 
@@ -108,7 +108,7 @@ func (s *signalSession) Handshake(ctx context.Context) error {
 		logger.Debug("\nHandshake-Listener\nReading first message\n")
 		err = s.readNextMsgInsecure(hbuf)
 		if err != nil {
-			logger.Debug("\nHandshake-Listener\nReturning; Failed to read first message\n")
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to read first message\n", err, "\n")
 			return err
 		}
 
