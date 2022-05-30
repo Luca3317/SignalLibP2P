@@ -14,6 +14,7 @@ import (
 	"github.com/Luca3317/libsignalcopy/session"
 	"github.com/Luca3317/libsignalcopy/util/retrievable"
 	pool "github.com/libp2p/go-buffer-pool"
+	"github.com/libp2p/go-libp2p-core/crypto"
 )
 
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
@@ -28,6 +29,16 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		if err != nil {
 			log.Fatal("failed to create bundle")
 		}
+
+		keybytes, err := retrievable.ReadLibP2PKeys()
+		if err != nil {
+			log.Fatal("failed to read libp2p key\n", err)
+		}
+		key, err := crypto.UnmarshalPublicKey(keybytes)
+		if err != nil {
+			log.Fatal("failed to unmarshal libp2p key\n", err)
+		}
+		s.remoteKey = key
 
 		bundle := prekey.NewBundle(
 			ret.Ids.RegID, ret.Ids.DevID,
