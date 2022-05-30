@@ -2,6 +2,7 @@ package signallibp2p
 
 import (
 	"encoding/binary"
+	"errors"
 	"io"
 )
 
@@ -30,4 +31,12 @@ func (s *signalSession) readNextMsgInsecure(buf []byte) error {
 // data will be prefixed with its length in bytes, written as a 16-bit uint in network order.
 func (s *signalSession) writeMsgInsecure(data []byte) (int, error) {
 	return s.insecureConn.Write(data)
+}
+
+func (s *signalSession) Write(data []byte) (int, error) {
+	return 0, errors.New("Write not yet implemented")
+}
+
+func (s *signalSession) Read(buf []byte) (int, error) {
+	return 0, errors.New("Read not yet implemented")
 }
