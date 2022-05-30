@@ -93,6 +93,8 @@ func (s *signalSession) Handshake(ctx context.Context) error {
 
 		logger.Debug("\nHandshake-Dialer\nI wrote ", i, "bytes (possibly; idk what that value means)\n")
 
+		var sief []byte
+		err = s.readNextMsgInsecure(sief)
 	} else {
 
 		logger.Debug("\nStarting Handshake-Listener\nwith partner ", s.remoteID, "\n")
@@ -120,6 +122,7 @@ func (s *signalSession) Handshake(ctx context.Context) error {
 		if err != nil {
 			log.Fatal("nHandshake-Dialer\nReturning; Failed to make PreKeyMessage from bytes\n")
 		}
+
 	}
 
 	logger.Debug("\n\nFinished handshake without raising errors!\n\n")
