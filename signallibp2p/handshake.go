@@ -7,6 +7,7 @@ import (
 	"github.com/Luca3317/libsignalcopy/keys/prekey"
 	"github.com/Luca3317/libsignalcopy/logger"
 	"github.com/Luca3317/libsignalcopy/protocol"
+	"github.com/Luca3317/libsignalcopy/serialize"
 	"github.com/Luca3317/libsignalcopy/session"
 	"github.com/Luca3317/libsignalcopy/util/retrievable"
 )
@@ -67,6 +68,18 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 
 		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
+
+		// test
+		rm, err := protocol.NewPreKeySignalMessageFromBytes(message.Serialize(), serialize.NewJSONSerializer().PreKeySignalMessage, serialize.NewJSONSerializer().SignalMessage)
+		if err != nil {
+			logger.Debug("\n\n FAILE DTO MAKE PREKEYSINALMESSAGEFROMYBTES\n\n", err, "\n\n")
+			return err
+		}
+		_, err = s.sessionBuilder.Process(rm)
+		if err != nil {
+			logger.Debug("\n\n FAILE DTO PROCESSSSSS \n\n", err, "\n\n")
+			return err
+		}
 
 		// TODO FINISH
 
