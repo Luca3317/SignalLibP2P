@@ -38,5 +38,5 @@ func (s *signalSession) Write(data []byte) (int, error) {
 
 // right now returns just the length of the buffer
 func (s *signalSession) Read(buf []byte) (int, error) {
-	return s.insecureConn.Read(buf)
+	return len(buf), s.readNextMsgInsecure(buf)
 }
