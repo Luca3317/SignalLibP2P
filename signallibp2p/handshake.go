@@ -59,16 +59,6 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		// Step 4: Send first Message
-		logger.Debug("\nHandshake-Dialer\nStep 4: Sending first Message\n")
-		i, err := s.writeMsgInsecure(message.Serialize())
-		if err != nil {
-			logger.Debug("\nHandshake-Dialer\nReturning; Failed to write message!\n", err, "\n")
-			return err
-		}
-
-		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
-
 		// test
 		rm, err := protocol.NewPreKeySignalMessageFromBytes(message.Serialize(), serialize.NewJSONSerializer().PreKeySignalMessage, serialize.NewJSONSerializer().SignalMessage)
 		if err != nil {
@@ -80,6 +70,16 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			logger.Debug("\n\n FAILE DTO PROCESSSSSS \n\n", err, "\n\n")
 			return err
 		}
+
+		// Step 4: Send first Message
+		logger.Debug("\nHandshake-Dialer\nStep 4: Sending first Message\n")
+		i, err := s.writeMsgInsecure(message.Serialize())
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to write message!\n", err, "\n")
+			return err
+		}
+
+		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
 
 		// TODO FINISH
 
