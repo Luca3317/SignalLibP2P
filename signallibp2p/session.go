@@ -3,11 +3,18 @@ package signallibp2p
 import (
 	"bufio"
 	"context"
+	"errors"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/Luca3317/libsignalcopy/keys/identity"
+	"github.com/Luca3317/libsignalcopy/logger"
+	"github.com/Luca3317/libsignalcopy/serialize"
 	"github.com/Luca3317/libsignalcopy/session"
+	"github.com/Luca3317/libsignalcopy/state/record"
+	"github.com/Luca3317/libsignalcopy/util/keyhelper"
+	"github.com/Luca3317/libsignalcopy/util/retrievable"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
@@ -15,7 +22,8 @@ import (
 type signalSession struct {
 	initiator bool
 
-	sessionCipher *session.Cipher
+	sessionBuilder session.Builder
+	sessionCipher  *session.Cipher
 
 	localID   peer.ID
 	localKey  crypto.PrivKey
@@ -34,20 +42,82 @@ type signalSession struct {
 	qseek int     // queued bytes seek value.
 	qbuf  []byte  // queued bytes buffer.
 	rlen  [2]byte // work buffer to read in the incoming message length.
+
+	// These might belong in transport; Irrelevant for testing
+	prekeyStore       InMemoryPreKey
+	identityStore     InMemoryIdentityKey
+	signedprekeyStore InMemorySignedPreKey
+	sessionStore      InMemorySession
+	registrationID    uint32
 }
 
-// TODO
-// copy goroutine from nosie
+// Assumes that regid and devid are only relevant locally to identify sessions etc
+// which is wrong since its included in bundles, idek man
 func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, remote peer.ID, initiator bool) (*signalSession, error) {
 
+	// TODO: FINISH INITIALIZING S (SIGNALSESSION)
 	s := &signalSession{
+		initiator: initiator,
+
+		prekeyStore:       *NewInMemoryPreKey(),
+		signedprekeyStore: *NewInMemorySignedPreKey(),
+		sessionStore:      *NewInMemorySession(serialize.NewJSONSerializer()),
+		registrationID:    keyhelper.GenerateRegistrationID(),
+
+		localID:  tpt.localID,
+		localKey: tpt.privateKey,
+		remoteID: remote,
+
 		insecureConn:   insecure,
 		insecureReader: bufio.NewReader(insecure),
-		initiator:      initiator,
-		localID:        tpt.localID,
-		localKey:       tpt.privateKey,
-		remoteID:       remote,
 	}
+
+	var (
+		localRegID uint32
+		identity   *identity.KeyPair
+		prekey     *record.PreKey
+		sigPreKey  *record.SignedPreKey
+	)
+
+	// If dialer, generate new values; otherwise use stored
+	if initiator {
+		var err error
+		identity, err = keyhelper.GenerateIdentityKeyPair()
+		if err != nil {
+			logger.Debug("\nFailed to generate IdentityKeypair\n")
+			return nil, err
+		}
+
+		prekeys, err := keyhelper.GeneratePreKeys(0, 1, serialize.NewJSONSerializer().PreKeyRecord)
+		if err != nil {
+			logger.Debug("\nFailed to generate Prekey\n")
+			return nil, err
+		}
+		prekey = prekeys[0]
+
+		sigPreKey, err = keyhelper.GenerateSignedPreKey(identity, 0, serialize.NewJSONSerializer().SignedPreKeyRecord)
+		if err != nil {
+			logger.Debug("\nFailed to generate SignedPrekey\n")
+			return nil, err
+		}
+
+		localRegID = keyhelper.GenerateRegistrationID()
+
+	} else {
+		retr, err := retrievable.ReadBundle()
+		if err != nil {
+			logger.Debug("\nFailed to ReadBundle\n")
+			return nil, err
+		}
+		identity = &retr.IdentityKeyPair
+		prekey = &retr.PreKey
+		sigPreKey = &retr.SignedPreKey
+		localRegID = retr.Ids.RegID
+	}
+
+	s.identityStore = *NewInMemoryIdentityKey(identity, localRegID)
+	s.prekeyStore.StorePreKey(prekey.ID().Value, prekey)
+	s.signedprekeyStore.StoreSignedPreKey(sigPreKey.ID(), sigPreKey)
 
 	// the go-routine we create to run the handshake will
 	// write the result of the handshake to the respCh.
@@ -71,6 +141,8 @@ func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, re
 		<-respCh
 		return nil, ctx.Err()
 	}
+
+	return nil, errors.New("newsignalsession not implemented")
 }
 
 func (s *signalSession) LocalAddr() net.Addr {
