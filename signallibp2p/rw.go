@@ -2,7 +2,6 @@ package signallibp2p
 
 import (
 	"encoding/binary"
-	"errors"
 	"io"
 )
 
@@ -34,9 +33,10 @@ func (s *signalSession) writeMsgInsecure(data []byte) (int, error) {
 }
 
 func (s *signalSession) Write(data []byte) (int, error) {
-	return 0, errors.New("Write not yet implemented")
+	return s.writeMsgInsecure(data)
 }
 
+// right now returns just the length of the buffer
 func (s *signalSession) Read(buf []byte) (int, error) {
-	return 0, errors.New("Read not yet implemented")
+	return s.insecureConn.Read(buf)
 }
