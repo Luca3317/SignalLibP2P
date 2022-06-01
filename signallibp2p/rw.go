@@ -176,25 +176,3 @@ func (s *signalSession) Write(data []byte) (int, error) {
 	}
 	return written, nil
 }
-
-/* // Write encrypts the plaintext `in` data and sends it on the
-// secure connection.
-func (s *signalSession) Write(data []byte) (int, error) {
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
-
-	var (
-		cbuf  []byte
-		total = len(data)
-	)
-
-	cbuf = pool.Get(total)
-	defer pool.Put(cbuf)
-
-	ciphertext, err := s.encrypt(cbuf, data)
-	if err != nil {
-		return 0, err
-	}
-
-	return s.insecureConn.Write(ciphertext)
-} */

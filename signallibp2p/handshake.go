@@ -2,6 +2,7 @@ package signallibp2p
 
 import (
 	"context"
+	"runtime/debug"
 
 	"github.com/Luca3317/libsignalcopy/keys/prekey"
 	"github.com/Luca3317/libsignalcopy/logger"
@@ -12,6 +13,8 @@ import (
 )
 
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
+
+	logger.Debug("\n\nHere is the stack upon entering \n", debug.Stack(), "\n\n\n")
 
 	// If this is the dialer
 	if s.initiator {
