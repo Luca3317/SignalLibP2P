@@ -8,6 +8,7 @@ import (
 	"github.com/Luca3317/libsignalcopy/protocol"
 	"github.com/Luca3317/libsignalcopy/serialize"
 	pool "github.com/libp2p/go-buffer-pool"
+	"golang.org/x/crypto/poly1305"
 )
 
 // TODO: Insecure functions copied from noise; might be wrong for signal
@@ -130,7 +131,53 @@ func (s *signalSession) encrypt(out, plaintext []byte) ([]byte, error) {
 	return ciphermessage.Serialize(), err
 }
 
+const MaxPlaintextLength = 4096
+const LengthPrefixLength = 0
+const MaxTransportMsgLength = 100000
+
 // Write encrypts the plaintext `in` data and sends it on the
+// secure connection.
+func (s *signalSession) Write(data []byte) (int, error) {
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
+
+	var (
+		written int
+		cbuf    []byte
+		total   = len(data)
+	)
+
+	if total < MaxPlaintextLength {
+		cbuf = pool.Get(total + poly1305.TagSize + LengthPrefixLength)
+	} else {
+		cbuf = pool.Get(MaxTransportMsgLength + LengthPrefixLength)
+	}
+
+	defer pool.Put(cbuf)
+
+	for written < total {
+		end := written + MaxPlaintextLength
+		if end > total {
+			end = total
+		}
+
+		b, err := s.encrypt(cbuf[:LengthPrefixLength], data[written:end])
+		if err != nil {
+			return 0, err
+		}
+
+		binary.BigEndian.PutUint16(b, uint16(len(b)-LengthPrefixLength))
+
+		_, err = s.writeMsgInsecure(b)
+		if err != nil {
+			return written, err
+		}
+		written = end
+	}
+	return written, nil
+}
+
+/* // Write encrypts the plaintext `in` data and sends it on the
 // secure connection.
 func (s *signalSession) Write(data []byte) (int, error) {
 	s.writeLock.Lock()
@@ -150,4 +197,4 @@ func (s *signalSession) Write(data []byte) (int, error) {
 	}
 
 	return s.insecureConn.Write(ciphertext)
-}
+} */
