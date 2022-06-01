@@ -14,7 +14,9 @@ import (
 
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
-	logger.Debug("\n\nHere is the stack upon entering \n", debug.Stack(), "\n\n\n")
+	logger.Debug("\n\nHere is the stack upon entering \n")
+	debug.PrintStack()
+	logger.Debug("\n\n\n")
 
 	// If this is the dialer
 	if s.initiator {
