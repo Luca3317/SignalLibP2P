@@ -8,7 +8,6 @@ import (
 	"github.com/Luca3317/libsignalcopy/protocol"
 	"github.com/Luca3317/libsignalcopy/serialize"
 	pool "github.com/libp2p/go-buffer-pool"
-	"golang.org/x/crypto/poly1305"
 )
 
 // TODO: Insecure functions copied from noise; might be wrong for signal
@@ -38,11 +37,6 @@ func (s *signalSession) writeMsgInsecure(data []byte) (int, error) {
 	return s.insecureConn.Write(data)
 }
 
-// right now returns just the length of the buffer
-func (s *signalSession) Reads(buf []byte) (int, error) {
-	return len(buf), s.readNextMsgInsecure(buf)
-}
-
 // Read reads from the secure connection, returning plaintext data in `buf`.
 //
 // Honours io.Reader in terms of behaviour.
@@ -57,7 +51,7 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	// 2. Else, read the next message off the wire; next_len is length prefix.
 	//   2a. If len(buf) >= next_len, copy the message to input buffer (zero-alloc path), and return.
 	//   2b. If len(buf) >= (next_len - length of Authentication Tag), get buffer from pool, read encrypted message into it.
-	//        message directly into the input buffer and return the buffer obtained from the pool.
+	//       decrypt message directly into the input buffer and return the buffer obtained from the pool.
 	//   2c. If len(buf) < next_len, obtain buffer from pool, copy entire message into it, saturate buf, update seek pointer.
 	if s.qbuf != nil {
 		// we have queued bytes; copy as much as we can.
@@ -78,13 +72,13 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	}
 
 	// If the buffer is atleast as big as the encrypted message size,
-	// we can read AND  in place.
+	// we can read AND decrypt in place.
 	if len(buf) >= nextMsgLen {
 		if err := s.readNextMsgInsecure(buf[:nextMsgLen]); err != nil {
 			return 0, err
 		}
 
-		dbuf, err := s.(buf[:0], buf[:nextMsgLen])
+		dbuf, err := s.decrypt(buf[:0], buf[:nextMsgLen])
 		if err != nil {
 			return 0, err
 		}
@@ -93,13 +87,13 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	}
 
 	// otherwise, we get a buffer from the pool so we can read the message into it
-	// and then  in place, since we're retaining the buffer (or a view thereof).
+	// and then decrypt in place, since we're retaining the buffer (or a view thereof).
 	cbuf := pool.Get(nextMsgLen)
 	if err := s.readNextMsgInsecure(cbuf); err != nil {
 		return 0, err
 	}
 
-	if s.qbuf, err = s.(cbuf[:0], cbuf); err != nil {
+	if s.qbuf, err = s.decrypt(cbuf[:0], cbuf); err != nil {
 		return 0, err
 	}
 
@@ -116,7 +110,7 @@ func (s *signalSession) decrypt(out, ciphertext []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	ed, err := s.sessionCipher.(signalmessage)
+	ed, err := s.sessionCipher.Decrypt(signalmessage)
 	if err != nil {
 		logger.Debug("\n\nCANNOT ; FAILED TO DECRPYT\n", err, "\n\n")
 		return nil, err
@@ -143,9 +137,8 @@ func (s *signalSession) Write(data []byte) (int, error) {
 	defer s.writeLock.Unlock()
 
 	var (
-		written int
-		cbuf    []byte
-		total   = len(data)
+		cbuf  []byte
+		total = len(data)
 	)
 
 	cbuf = pool.Get(total)
@@ -156,47 +149,5 @@ func (s *signalSession) Write(data []byte) (int, error) {
 		return 0, err
 	}
 
-	return s.insecureConn.Write(data)
-}
-
-// Write encrypts the plaintext `in` data and sends it on the
-// secure connection.
-func (s *signalSession) NoiseWrite(data []byte) (int, error) {
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
-
-	var (
-		written int
-		cbuf    []byte
-		total   = len(data)
-	)
-
-	if total < MaxPlaintextLength {
-		cbuf = pool.Get(total + poly1305.TagSize + LengthPrefixLength)
-	} else {
-		cbuf = pool.Get(MaxTransportMsgLength + LengthPrefixLength)
-	}
-
-	defer pool.Put(cbuf)
-
-	for written < total {
-		end := written + MaxPlaintextLength
-		if end > total {
-			end = total
-		}
-
-		b, err := s.encrypt(cbuf[:LengthPrefixLength], data[written:end])
-		if err != nil {
-			return 0, err
-		}
-
-		binary.BigEndian.PutUint16(b, uint16(len(b)-LengthPrefixLength))
-
-		_, err = s.writeMsgInsecure(b)
-		if err != nil {
-			return written, err
-		}
-		written = end
-	}
-	return written, nil
+	return s.insecureConn.Write(ciphertext)
 }
