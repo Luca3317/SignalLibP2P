@@ -3,6 +3,7 @@ package signallibp2p
 import (
 	"context"
 	"runtime/debug"
+	"strings"
 
 	"github.com/Luca3317/libsignalcopy/keys/prekey"
 	"github.com/Luca3317/libsignalcopy/logger"
@@ -159,6 +160,8 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 		logger.Debug("\nHandshake-Listener\nReceived msg!;\n", hbuf, "\n")
+		logger.Debug("\nFirst nil at: ", strings.IndexByte(string(hbuf), 0), "\n")
+		logger.Debug("\nCut version:: ", hbuf[:strings.IndexByte(string(hbuf), 0)], "\n")
 
 		receivedMessage, err := protocol.NewPreKeySignalMessageFromBytes(hbuf, serialize.NewJSONSerializer().PreKeySignalMessage, serialize.NewJSONSerializer().SignalMessage)
 		if err != nil {
