@@ -21,7 +21,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
-		//		time.Sleep(3)
+		//del 		time.Sleep(3)
 	} else {
 		time.Sleep(1)
 		mlen, err := s.readNextInsecureMsgLen()
@@ -29,6 +29,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			logger.Debug("\nHandshake-Listener\nReturning; Failed to read messageLength!\n", err, "\n")
 			return err
 		}
+		logger.Debug("\nHandshake-Listener\n nest msg is ", mlen, " bytes")
 
 		hbuf := pool.Get(mlen)
 		defer pool.Put(hbuf)
