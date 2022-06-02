@@ -21,7 +21,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
-		time.Sleep(3)
+		//		time.Sleep(3)
 	} else {
 		time.Sleep(1)
 		mlen, err := s.readNextInsecureMsgLen()
@@ -42,6 +42,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		logger.Debug("i read this: ", string(hbuf))
 	}
 
+	time.Sleep(2)
 	return nil
 }
 

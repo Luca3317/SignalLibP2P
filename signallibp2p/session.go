@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	"runtime/debug"
 	"sync"
 	"time"
 
@@ -55,10 +54,6 @@ type signalSession struct {
 // Assumes that regid and devid are only relevant locally to identify sessions etc
 // which is wrong since its included in bundles, idek man
 func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, remote peer.ID, initiator bool) (*signalSession, error) {
-
-	logger.Debug("\n\nHere is the stack upon entering session \n")
-	debug.PrintStack()
-	logger.Debug("\n\n\n")
 
 	// TODO: FINISH INITIALIZING S (SIGNALSESSION)
 	s := &signalSession{
