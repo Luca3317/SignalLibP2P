@@ -44,7 +44,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		logger.Debug("i read ", i, " bytes: ", string(hbuf))
+		logger.Debug("i read ", i, " bytess: ", string(hbuf))
 	}
 
 	time.Sleep(2 * time.Second)
