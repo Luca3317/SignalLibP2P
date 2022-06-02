@@ -28,8 +28,7 @@ func (s *signalSession) readNextInsecureMsgLen() (int, error) {
 // to determine the size of the next message to be read from the insecureConn channel and then call
 // this function with a buffer of exactly that size.
 func (s *signalSession) readNextMsgInsecure(buf []byte) error {
-	b, err := io.ReadAll(s.insecureReader)
-	copy(buf, b)
+	_, err := io.ReadFull(s.insecureReader, buf)
 	return err
 }
 
