@@ -105,7 +105,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 
 		// Step 4: Send first Message
-		logger.Debug("\nHandshake-Dialer\nI will need ", message.Serialize(), " bytes in buffer \n")
+		logger.Debug("\nHandshake-Dialer\nI will need ", len(message.Serialize()), " bytes in buffer \n")
 		logger.Debug("\nHandshake-Dialer\nStep 4: Sending first Message\n")
 		i, err := s.writeMsgInsecure(message.Serialize())
 		if err != nil {
@@ -163,7 +163,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		logger.Debug("\nFirst nil at: ", strings.IndexByte(string(hbuf), 0), "\n")
 		logger.Debug("\nCut version:: ", hbuf[:strings.IndexByte(string(hbuf), 0)], "\n")
 
-		receivedMessage, err := protocol.NewPreKeySignalMessageFromBytes(hbuf, serialize.NewJSONSerializer().PreKeySignalMessage, serialize.NewJSONSerializer().SignalMessage)
+		receivedMessage, err := protocol.NewPreKeySignalMessageFromBytes(hbuf[:strings.IndexByte(string(hbuf), 0)], serialize.NewJSONSerializer().PreKeySignalMessage, serialize.NewJSONSerializer().SignalMessage)
 		if err != nil {
 			logger.Debug("\nHandshake-Listener\nReturning; Failed to make prekeymessage from byteys!\n", err, "\n")
 			return err
