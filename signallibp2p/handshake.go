@@ -15,7 +15,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 	logger.Debug("Enter data:\ninitiator: ", s.initiator, "\nLocalAddr: ", s.insecureConn.LocalAddr().String(), "\nRemoteAddr: ", s.insecureConn.RemoteAddr().String(), "\nNetworkName: ", s.insecureConn.LocalAddr().Network(), "\n(RemoteNetworkName: ", s.insecureConn.RemoteAddr().Network(), "\n\n\n")
 
 	if s.initiator {
-		plaintext := []byte("Hello!")
+		plaintext := []byte("hello My name is so and so whats good with you hockeystick")
 		i, err := s.writeMsgInsecure(plaintext)
 		if err != nil {
 			logger.Debug("\n\nFAILED TO WRITE MY MESSAGE!\n\n")
@@ -48,7 +48,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 		logger.Debug("\nHandshake-Listener\n nest msg is ", mlen, " bytes")
 
-		hbuf := pool.Get(8)
+		hbuf := pool.Get(mlen)
 		defer pool.Put(hbuf)
 
 		err = s.readNextMsgInsecure(hbuf)
