@@ -97,7 +97,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		// Step 3: Create SessionCipher
 		logger.Debug("\nHandshake-Dialer\nCreating SessionCipher\n")
 		s.sessionCipher = session.NewCipher(&s.sessionBuilder, remoteAddr)
-		plaintext := []byte("Hello!")
+		plaintext := []byte("This is my initial handshake message!!! AINT THAT CRAZY WTF")
 		message, err := s.sessionCipher.Encrypt(plaintext)
 		if err != nil {
 			logger.Debug("\nHandshake-Dialer\nReturning; Failed to encrypt data with new cipher\n", err, "\n")
@@ -125,7 +125,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		responseMessage, err := protocol.NewSignalMessageFromBytes(hbuf, serialize.NewJSONSerializer().SignalMessage)
+		responseMessage, err := protocol.NewSignalMessageFromBytes(hbuf[:strings.IndexByte(string(hbuf), 0)], serialize.NewJSONSerializer().SignalMessage)
 		if err != nil {
 			logger.Debug("\nHandshake-Dialer\nReturning; Failed make signal message from bytes!\n", err, "\n")
 			return err
@@ -137,7 +137,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		logger.Debug("\nHandshake-Dialer\nReturning; Encrypted: ", deResponse, "\n guess im done? \n")
+		logger.Debug("\nHandshake-Dialer\nReturning; Decrypted: ", deResponse, "\n guess im done? \n")
 
 	} else {
 
