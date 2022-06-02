@@ -39,14 +39,14 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		hbuf := pool.Get(buffersize)
 		defer pool.Put(hbuf)
 
-		err := s.readNextMsgInsecure(hbuf)
+		i, err := s.insecureConn.Read(hbuf)
 		if err != nil {
 			logger.Debug("\nHandshake-Listener\nReturning; Failed to read message!\n", err, "\n")
 			logger.Debug("\nLeft hbuf in this state: \n", hbuf, "\nAs string: ", string(hbuf))
 			return err
 		}
 
-		logger.Debug("i read  bytess: ", string(hbuf))
+		logger.Debug("i read ", i, " bytess: ", string(hbuf))
 	}
 
 	time.Sleep(2 * time.Second)
