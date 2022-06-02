@@ -45,6 +45,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 	}
 
 	time.Sleep(2)
+	logger.Debug("\n\nIm returning nil... whyx??????!!\n\n")
 	return nil
 }
 
