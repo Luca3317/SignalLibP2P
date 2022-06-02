@@ -15,7 +15,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 	logger.Debug("Enter data:\ninitiator: ", s.initiator, "\nLocalAddr: ", s.insecureConn.LocalAddr().String(), "\nRemoteAddr: ", s.insecureConn.RemoteAddr().String(), "\nNetworkName: ", s.insecureConn.LocalAddr().Network(), "\n(RemoteNetworkName: ", s.insecureConn.RemoteAddr().Network(), "\n\n\n")
 
 	if s.initiator {
-		plaintext := []byte("hello My name is so and so whats good with you hockeystick")
+		plaintext := []byte("hockeystick shit")
 		i, err := s.writeMsgInsecure(plaintext)
 		if err != nil {
 			logger.Debug("\n\nFAILED TO WRITE MY MESSAGE!\n\n")
@@ -23,21 +23,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
 
-		mlen, err := s.readNextInsecureMsgLen()
-		if err != nil {
-			logger.Debug("\nHandshake-Dialer\nReturning; Failed to read messageLength!\n", err, "\n")
-			return err
-		}
-		logger.Debug("\nHandshake-Dialer\n nest msg is ", mlen, " bytes")
-
-		hbuf := pool.Get(mlen)
-		defer pool.Put(hbuf)
-
-		err = s.readNextMsgInsecure(hbuf)
-		if err != nil {
-			logger.Debug("\nHandshake-Dialer\nReturning; Failed to read message!\n", err, "\n")
-			return err
-		}
+		time.Sleep(1 * time.Second)
 
 	} else {
 		time.Sleep(1)
@@ -61,7 +47,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		logger.Debug("i read this: ", string(hbuf))
 	}
 
-	time.Sleep(2)
+	time.Sleep(2 * time.Second)
 	logger.Debug("\n\nIm returning nil... whyx??????!!\n\n")
 	return nil
 }
