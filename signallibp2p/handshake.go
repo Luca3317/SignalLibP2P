@@ -11,6 +11,8 @@ import (
 // test
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
+	logger.Debug("using updated handshake\n")
+
 	if s.initiator {
 		plaintext := []byte("Hello!")
 		i, err := s.writeMsgInsecure(plaintext)
