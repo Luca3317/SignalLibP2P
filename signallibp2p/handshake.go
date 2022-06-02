@@ -7,6 +7,7 @@ import (
 	"github.com/Luca3317/libsignalcopy/keys/prekey"
 	"github.com/Luca3317/libsignalcopy/logger"
 	"github.com/Luca3317/libsignalcopy/protocol"
+	"github.com/Luca3317/libsignalcopy/serialize"
 	"github.com/Luca3317/libsignalcopy/session"
 	"github.com/Luca3317/libsignalcopy/util/retrievable"
 	pool "github.com/libp2p/go-buffer-pool"
@@ -56,7 +57,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		// Step 3: Create SessionCipher
 		logger.Debug("\nHandshake-Dialer\nCreating SessionCipher\n")
 		s.sessionCipher = session.NewCipher(&s.sessionBuilder, remoteAddr)
-		plaintext := []byte("Hello")
+		plaintext := []byte("Hello!")
 		message, err := s.sessionCipher.Encrypt(plaintext)
 		if err != nil {
 			logger.Debug("\nHandshake-Dialer\nReturning; Failed to encrypt data with new cipher\n", err, "\n")
@@ -70,10 +71,38 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			logger.Debug("\nHandshake-Dialer\nReturning; Failed to write message!\n", err, "\n")
 			return err
 		}
-
 		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
 
-		// TODO FINISH
+		// Step 5: Receive first response
+		logger.Debug("\nHandshake-Dialer\nStep 5: Receive first response\n")
+		mlen, err := s.readNextInsecureMsgLen()
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to read messageLength!\n", err, "\n")
+			return err
+		}
+
+		hbuf := pool.Get(mlen)
+		defer pool.Put(hbuf)
+
+		err = s.readNextMsgInsecure(hbuf)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to read message!\n", err, "\n")
+			return err
+		}
+
+		responseMessage, err := protocol.NewSignalMessageFromBytes(hbuf, serialize.NewJSONSerializer().SignalMessage)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed make signal message from bytes!\n", err, "\n")
+			return err
+		}
+
+		deResponse, err := s.sessionCipher.Decrypt(responseMessage)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to decrypt message!\n", err, "\n")
+			return err
+		}
+
+		logger.Debug("\nHandshake-Dialer\nReturning; Encrypted: ", deResponse, "\n guess im done? \n")
 
 	} else {
 
@@ -93,12 +122,48 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		hbuf := pool.Get(mlen + 1000)
+		hbuf := pool.Get(mlen)
 		defer pool.Put(hbuf)
 
 		err = s.readNextMsgInsecure(hbuf)
 		if err != nil {
 			logger.Debug("\nHandshake-Listener\nReturning; Failed to read message!\n", err, "\n")
+			return err
+		}
+
+		receivedMessage, err := protocol.NewPreKeySignalMessageFromBytes(hbuf, serialize.NewJSONSerializer().PreKeySignalMessage, serialize.NewJSONSerializer().SignalMessage)
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to make prekeymessage from byteys!\n", err, "\n")
+			return err
+		}
+
+		unsignedPreKeyID, err := s.sessionBuilder.Process(receivedMessage)
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to process receivedmessage!\n", err, "\n")
+			return err
+		}
+		logger.Debug("\nHandshake-Listener\nHeres the retrieved prekey id: ", unsignedPreKeyID, "; dunoo what do with this lol!\n")
+
+		s.sessionCipher = session.NewCipher(&s.sessionBuilder, remoteAddr)
+		msg, err := s.sessionCipher.Decrypt(receivedMessage.WhisperMessage())
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to decrypt prekeysignal!\n", err, "\n")
+			return err
+		}
+
+		logger.Debug("\nHandshake-Listener\nDecryption result: ", msg, "\n")
+
+		plainTextResponse := []byte("jahi!")
+		response, err := s.sessionCipher.Encrypt(plainTextResponse)
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to decrypt response!\n", err, "\n")
+			return err
+		}
+
+		logger.Debug("\nHandshake-Listener\nStep x: Sending first response\n")
+		_, err = s.writeMsgInsecure(response.Serialize())
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to write response!\n", err, "\n")
 			return err
 		}
 
