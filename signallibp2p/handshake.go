@@ -8,6 +8,8 @@ import (
 	pool "github.com/libp2p/go-buffer-pool"
 )
 
+const buffersize = 10000
+
 // test
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
@@ -34,17 +36,17 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			   		}
 			   		logger.Debug("\nHandshake-Listener\n nest msg is ", mlen, " bytes") */
 
-		hbuf := pool.Get(100)
+		hbuf := pool.Get(buffersize)
 		defer pool.Put(hbuf)
 
-		i, err := s.insecureConn.Read(hbuf)
+		err := s.readNextMsgInsecure(hbuf)
 		if err != nil {
 			logger.Debug("\nHandshake-Listener\nReturning; Failed to read message!\n", err, "\n")
 			logger.Debug("\nLeft hbuf in this state: \n", hbuf, "\nAs string: ", string(hbuf))
 			return err
 		}
 
-		logger.Debug("i read ", i, " bytess: ", string(hbuf))
+		logger.Debug("i read  bytess: ", string(hbuf))
 	}
 
 	time.Sleep(2 * time.Second)
