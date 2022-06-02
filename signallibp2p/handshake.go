@@ -54,6 +54,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		err = s.readNextMsgInsecure(hbuf)
 		if err != nil {
 			logger.Debug("\nHandshake-Listener\nReturning; Failed to read message!\n", err, "\n")
+			logger.Debug("\nLeft hbuf in this state: \n", hbuf, "\nAs string: ", string(hbuf))
 			return err
 		}
 
