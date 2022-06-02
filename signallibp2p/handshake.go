@@ -11,7 +11,8 @@ import (
 // test
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
-	logger.Debug("using updated handshake\n")
+	logger.Debug("\n\nUsing updated handshake\n")
+	logger.Debug("Enter data:\ninitiator: ", s.initiator, "\nLocalAddr: ", s.insecureConn.LocalAddr().String(), "\nRemoteAddr: ", s.insecureConn.RemoteAddr().String(), "\nNetworkName: ", s.insecureConn.LocalAddr().Network(), "\n(RemoteNetworkName: ", s.insecureConn.RemoteAddr().Network(), "\n\n\n")
 
 	if s.initiator {
 		plaintext := []byte("Hello!")
