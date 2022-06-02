@@ -2,18 +2,47 @@ package signallibp2p
 
 import (
 	"context"
-	"runtime/debug"
+	"time"
 
-	"github.com/Luca3317/libsignalcopy/keys/prekey"
 	"github.com/Luca3317/libsignalcopy/logger"
-	"github.com/Luca3317/libsignalcopy/protocol"
-	"github.com/Luca3317/libsignalcopy/serialize"
-	"github.com/Luca3317/libsignalcopy/session"
-	"github.com/Luca3317/libsignalcopy/util/retrievable"
 	pool "github.com/libp2p/go-buffer-pool"
 )
 
+// test
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
+
+	if s.initiator {
+		plaintext := []byte("Hello!")
+		i, err := s.writeMsgInsecure(plaintext)
+		if err != nil {
+			logger.Debug("\n\nFAILED TO WRITE MY MESSAGE!\n\n")
+			return err
+		}
+		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
+	} else {
+		time.Sleep(1)
+		mlen, err := s.readNextInsecureMsgLen()
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to read messageLength!\n", err, "\n")
+			return err
+		}
+
+		hbuf := pool.Get(mlen)
+		defer pool.Put(hbuf)
+
+		err = s.readNextMsgInsecure(hbuf)
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to read message!\n", err, "\n")
+			return err
+		}
+
+		logger.Debug("i read this: ", string(hbuf))
+	}
+
+	return nil
+}
+
+/* func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 	logger.Debug("\n\nHere is the stack upon entering \n")
 	debug.PrintStack()
@@ -177,3 +206,4 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 	return nil
 }
+*/
