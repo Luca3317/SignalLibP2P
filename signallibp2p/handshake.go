@@ -48,7 +48,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 		logger.Debug("\nHandshake-Listener\n nest msg is ", mlen, " bytes")
 
-		hbuf := pool.Get(6)
+		hbuf := pool.Get(8)
 		defer pool.Put(hbuf)
 
 		err = s.readNextMsgInsecure(hbuf)
