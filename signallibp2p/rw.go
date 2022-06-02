@@ -19,7 +19,7 @@ func (s *signalSession) readNextInsecureMsgLen() (int, error) {
 		return 0, err
 	}
 
-	return int(binary.LittleEndian.Uint16(s.rlen[:])), err
+	return int(binary.BigEndian.Uint16(s.rlen[:])), err
 }
 
 // readNextMsgInsecure tries to read exactly len(buf) bytes into buf from
