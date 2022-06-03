@@ -54,7 +54,7 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 
 func (s *signalSession) Write(data []byte) (int, error) {
 
-	logger.Debug("\nTrying to write: ", data)
+	logger.Debug("\nTrying to write: ", string(data))
 
 	if buffersize < len(data) {
 		logger.Debug("\nWrite: Buffer too large\n")
@@ -77,6 +77,8 @@ func (s *signalSession) Write(data []byte) (int, error) {
 		logger.Debug("\n\nFailed to write!\n", err)
 		return 0, err
 	}
+
+	logger.Debug("\nSuccessfully wrote: ", string(data))
 
 	return i, nil
 }
