@@ -16,6 +16,7 @@ import (
 	"github.com/Luca3317/libsignalcopy/util/retrievable"
 	pool "github.com/libp2p/go-buffer-pool"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 const buffersize = 10000
@@ -104,6 +105,43 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
 
+		// Step 5: Receive response; use payload as remote key
+		logger.Debug("\nHandshake-Dialer\nStep 4: Sending initial Message\n")
+		i, err = s.insecureConn.Read(hbuf)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to read message!\n", err, "\n")
+			return err
+		}
+		logger.Debug("\nHandshake-Dialer\nRead ", i, " bytes\n")
+
+		response, err := protocol.NewSignalMessageFromBytes(hbuf[:strings.IndexByte(string(hbuf), 0)], serialize.NewJSONSerializer().SignalMessage)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to make signal message from bytes!\n", err, "\n")
+			return err
+		}
+
+		deResponse, err := s.sessionCipher.Decrypt(response)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to decrypt response!\n", err, "\n")
+			return err
+		}
+
+		pubkey, err := crypto.UnmarshalPublicKey(deResponse)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to make pubkey from bytes!\n", err, "\n")
+			return err
+		}
+		logger.Debug("\nTHE KEY:\n", pubkey, "\n")
+
+		id, err := peer.IDFromPublicKey(pubkey)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to make id!\n", err, "\n")
+			return err
+		}
+
+		s.remoteKey = pubkey
+		s.remoteID = id
+
 	} else {
 
 		// Step 0: Preparations
@@ -169,6 +207,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 		logger.Debug("\nHandshake-Listener\nWrote ", i, " bytes\n")
+		logger.Debug("\nTHE KEY:\n", keyM, "\n")
 	}
 
 	logger.Debug("\nFinished Handshake\n\nExit data:\ninitiator: ", s.initiator,
