@@ -61,7 +61,7 @@ func (s *signalSession) Write(data []byte) (int, error) {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 
-	enc, err := s.sessionCipher.Encrypt(data)
+	enc, err := s.sessionCipher.Encrypt(data[:strings.IndexByte(string(data), 0)])
 	if err != nil {
 		logger.Debug("\nFailed to encrypt in WRITE\n", err, "\n")
 		return 0, err
