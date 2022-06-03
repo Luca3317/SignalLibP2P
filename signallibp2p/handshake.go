@@ -21,7 +21,7 @@ import (
 
 const buffersize = 10000
 
-func (s *signalSession) Handshake(ctx context.Context) (err error) {
+func (s *signalSession) oldithinkHandshake(ctx context.Context) (err error) {
 
 	logger.Debug("\n\nHandshake enter data:\ninitiator: ", s.initiator,
 		"\nLocalAddr: ", s.insecureConn.LocalAddr().String(),
@@ -261,7 +261,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 	return nil
 }
 
-func (s *signalSession) NewHandshake(ctx context.Context) (err error) {
+func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 	logger.Debug("\n\nHandshake enter data:\ninitiator: ", s.initiator,
 		"\nLocalAddr: ", s.insecureConn.LocalAddr().String(),
