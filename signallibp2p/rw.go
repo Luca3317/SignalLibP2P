@@ -2,13 +2,12 @@ package signallibp2p
 
 import (
 	"encoding/binary"
+	"errors"
 	"io"
 
 	"github.com/Luca3317/libsignalcopy/logger"
 	"github.com/Luca3317/libsignalcopy/protocol"
 	"github.com/Luca3317/libsignalcopy/serialize"
-	pool "github.com/libp2p/go-buffer-pool"
-	"golang.org/x/crypto/poly1305"
 )
 
 // TODO: Insecure functions copied from noise; might be wrong for signal
@@ -23,10 +22,62 @@ func (s *signalSession) readNextInsecureMsgLen() (int, error) {
 	return int(binary.BigEndian.Uint16(s.rlen[:])), err
 }
 
+func (s *signalSession) Read(data []byte) (int, error) {
+
+	i, err := s.insecureConn.Read(data)
+	if err != nil {
+		logger.Debug("\n\nFailed to read!\n", err)
+		return 0, err
+	}
+
+	msg, err := protocol.NewSignalMessageFromBytes(data, serialize.NewJSONSerializer().SignalMessage)
+	if err != nil {
+		logger.Debug("\n\nFailed to make message!\n", err)
+		return 0, err
+	}
+
+	dec, err := s.sessionCipher.Decrypt(msg)
+	if err != nil {
+		logger.Debug("\n\nFailed to decrypt!\n", err)
+		return 0, err
+	}
+
+	copy(data, dec)
+
+	return i, nil
+}
+
+func (s *signalSession) Write(buf []byte) (int, error) {
+
+	if buffersize < len(buf) {
+		logger.Debug("\nWrite: Buffer too large\n")
+		return 0, errors.New("Write: Buffer too large")
+	}
+
+	cmsg, err := s.sessionCipher.Encrypt(buf)
+	if err != nil {
+		logger.Debug("\n\nFailed to encrypt!\n", err)
+		return 0, err
+	}
+
+	if buffersize < len(cmsg.Serialize()) {
+		logger.Debug("\nWrite: Encrypted Buffer too large\n")
+		return 0, errors.New("Write: Encrypted Buffer too large")
+	}
+
+	i, err := s.writeMsgInsecure(cmsg.Serialize())
+	if err != nil {
+		logger.Debug("\n\nFailed to write!\n", err)
+		return 0, err
+	}
+
+	return i, nil
+}
+
 // TODO: consider long messages
 // encrypt
 // etc
-func (s *signalSession) Read(buf []byte) (int, error) {
+func (s *signalSession) ReadOld(buf []byte) (int, error) {
 	s.readLock.Lock()
 	defer s.readLock.Unlock()
 
@@ -41,7 +92,7 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 // TODO: consider long messages
 // encrypt
 // etc
-func (s *signalSession) Write(data []byte) (int, error) {
+func (s *signalSession) WriteOld(data []byte) (int, error) {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 
@@ -81,69 +132,6 @@ func (s *signalSession) sdRead(buf []byte) (int, error) {
 	return i, err
 }
 
-func (s *signalSession) NoiseRead(buf []byte) (int, error) {
-	s.readLock.Lock()
-	defer s.readLock.Unlock()
-
-	// 1. If we have queued received bytes:
-	//   1a. If len(buf) < len(queued), saturate buf, update seek pointer, return.
-	//   1b. If len(buf) >= len(queued), copy remaining to buf, release queued buffer back into pool, return.
-	//
-	// 2. Else, read the next message off the wire; next_len is length prefix.
-	//   2a. If len(buf) >= next_len, copy the message to input buffer (zero-alloc path), and return.
-	//   2b. If len(buf) >= (next_len - length of Authentication Tag), get buffer from pool, read encrypted message into it.
-	//       decrypt message directly into the input buffer and return the buffer obtained from the pool.
-	//   2c. If len(buf) < next_len, obtain buffer from pool, copy entire message into it, saturate buf, update seek pointer.
-	if s.qbuf != nil {
-		// we have queued bytes; copy as much as we can.
-		copied := copy(buf, s.qbuf[s.qseek:])
-		s.qseek += copied
-		if s.qseek == len(s.qbuf) {
-			// queued buffer is now empty, reset and release.
-			pool.Put(s.qbuf)
-			s.qseek, s.qbuf = 0, nil
-		}
-		return copied, nil
-	}
-
-	// length of the next encrypted message.
-	nextMsgLen, err := s.readNextInsecureMsgLen()
-	if err != nil {
-		return 0, err
-	}
-
-	// If the buffer is atleast as big as the encrypted message size,
-	// we can read AND decrypt in place.
-	if len(buf) >= nextMsgLen {
-		if err := s.readNextMsgInsecure(buf[:nextMsgLen]); err != nil {
-			return 0, err
-		}
-
-		dbuf, err := s.decrypt(buf[:0], buf[:nextMsgLen])
-		if err != nil {
-			return 0, err
-		}
-
-		return len(dbuf), nil
-	}
-
-	// otherwise, we get a buffer from the pool so we can read the message into it
-	// and then decrypt in place, since we're retaining the buffer (or a view thereof).
-	cbuf := pool.Get(nextMsgLen)
-	if err := s.readNextMsgInsecure(cbuf); err != nil {
-		return 0, err
-	}
-
-	if s.qbuf, err = s.decrypt(cbuf[:0], cbuf); err != nil {
-		return 0, err
-	}
-
-	// copy as many bytes as we can; update seek pointer.
-	s.qseek = copy(buf, s.qbuf)
-
-	return s.qseek, nil
-}
-
 func (s *signalSession) decrypt(out, ciphertext []byte) ([]byte, error) {
 	signalmessage, err := protocol.NewSignalMessageFromBytes(ciphertext, serialize.NewJSONSerializer().SignalMessage)
 	if err != nil {
@@ -174,45 +162,3 @@ func (s *signalSession) encrypt(out, plaintext []byte) ([]byte, error) {
 const MaxPlaintextLength = 4096
 const LengthPrefixLength = 0
 const MaxTransportMsgLength = 100000
-
-// Write encrypts the plaintext `in` data and sends it on the
-// secure connection.
-func (s *signalSession) sWrite(data []byte) (int, error) {
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
-
-	var (
-		written int
-		cbuf    []byte
-		total   = len(data)
-	)
-
-	if total < MaxPlaintextLength {
-		cbuf = pool.Get(total + poly1305.TagSize + LengthPrefixLength)
-	} else {
-		cbuf = pool.Get(MaxTransportMsgLength + LengthPrefixLength)
-	}
-
-	defer pool.Put(cbuf)
-
-	for written < total {
-		end := written + MaxPlaintextLength
-		if end > total {
-			end = total
-		}
-
-		b, err := s.encrypt(cbuf[:LengthPrefixLength], data[written:end])
-		if err != nil {
-			return 0, err
-		}
-
-		binary.BigEndian.PutUint16(b, uint16(len(b)-LengthPrefixLength))
-
-		_, err = s.writeMsgInsecure(b)
-		if err != nil {
-			return written, err
-		}
-		written = end
-	}
-	return written, nil
-}
