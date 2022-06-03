@@ -12,6 +12,7 @@ import (
 )
 
 // TODO: Insecure functions copied from noise; might be wrong for signal
+// this shit dont work
 // readNextInsecureMsgLen reads the length of the next message on the insecureConn channel.
 func (s *signalSession) readNextInsecureMsgLen() (int, error) {
 	_, err := io.ReadFull(s.insecureReader, s.rlen[:])
@@ -20,6 +21,36 @@ func (s *signalSession) readNextInsecureMsgLen() (int, error) {
 	}
 
 	return int(binary.BigEndian.Uint16(s.rlen[:])), err
+}
+
+// TODO: consider long messages
+// encrypt
+// etc
+func (s *signalSession) Read(buf []byte) (int, error) {
+	s.readLock.Lock()
+	defer s.readLock.Unlock()
+
+	i, err := s.insecureConn.Read(buf)
+	if err != nil {
+		logger.Debug("\n\n\nFAILED TO READ IN READ\n\n\n")
+	}
+
+	return i, err
+}
+
+// TODO: consider long messages
+// encrypt
+// etc
+func (s *signalSession) Write(data []byte) (int, error) {
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
+
+	i, err := s.insecureConn.Write(data)
+	if err != nil {
+		logger.Debug("\n\nFAILED TO WRITE IN WRITE\n\n")
+	}
+
+	return i, err
 }
 
 // readNextMsgInsecure tries to read exactly len(buf) bytes into buf from
@@ -38,7 +69,7 @@ func (s *signalSession) writeMsgInsecure(data []byte) (int, error) {
 	return s.insecureConn.Write(data)
 }
 
-func (s *signalSession) Read(buf []byte) (int, error) {
+func (s *signalSession) sdRead(buf []byte) (int, error) {
 	s.readLock.Lock()
 	defer s.readLock.Unlock()
 
@@ -146,7 +177,7 @@ const MaxTransportMsgLength = 100000
 
 // Write encrypts the plaintext `in` data and sends it on the
 // secure connection.
-func (s *signalSession) Write(data []byte) (int, error) {
+func (s *signalSession) sWrite(data []byte) (int, error) {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 
