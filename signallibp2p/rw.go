@@ -22,15 +22,15 @@ func (s *signalSession) readNextInsecureMsgLen() (int, error) {
 	return int(binary.BigEndian.Uint16(s.rlen[:])), err
 }
 
-func (s *signalSession) Read(data []byte) (int, error) {
+func (s *signalSession) Read(buf []byte) (int, error) {
 
-	i, err := s.insecureConn.Read(data)
+	i, err := s.insecureConn.Read(buf)
 	if err != nil {
 		logger.Debug("\n\nFailed to read!\n", err)
 		return 0, err
 	}
 
-	msg, err := protocol.NewSignalMessageFromBytes(data, serialize.NewJSONSerializer().SignalMessage)
+	msg, err := protocol.NewSignalMessageFromBytes(buf, serialize.NewJSONSerializer().SignalMessage)
 	if err != nil {
 		logger.Debug("\n\nFailed to make message!\n", err)
 		return 0, err
@@ -42,19 +42,24 @@ func (s *signalSession) Read(data []byte) (int, error) {
 		return 0, err
 	}
 
-	copy(data, dec)
+	if len(dec) > len(buf) {
+		logger.Debug("\nRead: Buffer too large\n")
+		return 0, errors.New("Read: Buffer too large")
+	}
+
+	copy(buf, dec)
 
 	return i, nil
 }
 
-func (s *signalSession) Write(buf []byte) (int, error) {
+func (s *signalSession) Write(data []byte) (int, error) {
 
-	if buffersize < len(buf) {
+	if buffersize < len(data) {
 		logger.Debug("\nWrite: Buffer too large\n")
 		return 0, errors.New("Write: Buffer too large")
 	}
 
-	cmsg, err := s.sessionCipher.Encrypt(buf)
+	cmsg, err := s.sessionCipher.Encrypt(data)
 	if err != nil {
 		logger.Debug("\n\nFailed to encrypt!\n", err)
 		return 0, err
