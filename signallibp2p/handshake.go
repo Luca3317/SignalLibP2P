@@ -2,7 +2,6 @@ package signallibp2p
 
 import (
 	"context"
-	"runtime/debug"
 	"strings"
 
 	"github.com/Luca3317/libsignalcopy/keys/prekey"
@@ -16,48 +15,9 @@ import (
 
 const buffersize = 10000
 
-/* // test
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
-	logger.Debug("\n\nUsing updated handshake\n")
-	logger.Debug("Enter data:\ninitiator: ", s.initiator, "\nLocalAddr: ", s.insecureConn.LocalAddr().String(), "\nRemoteAddr: ", s.insecureConn.RemoteAddr().String(), "\nNetworkName: ", s.insecureConn.LocalAddr().Network(), "\n(RemoteNetworkName: ", s.insecureConn.RemoteAddr().Network(), "\n\n\n")
-
-	if s.initiator {
-		plaintext := []byte("hockeystick oder was shit\n")
-		i, err := s.writeMsgInsecure(plaintext)
-		if err != nil {
-			logger.Debug("\n\nFAILED TO WRITE MY MESSAGE!\n\n")
-			return err
-		}
-		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
-
-		time.Sleep(1 * time.Second)
-
-	} else {
-
-		hbuf := pool.Get(buffersize)
-		defer pool.Put(hbuf)
-
-		i, err := s.insecureConn.Read(hbuf)
-		if err != nil {
-			logger.Debug("\nHandshake-Listener\nReturning; Failed to read message!\n", err, "\n")
-			logger.Debug("\nLeft hbuf in this state: \n", hbuf, "\nAs string: ", string(hbuf))
-			return err
-		}
-
-		logger.Debug("i read ", i, " bytess: ", string(hbuf))
-	}
-
-	time.Sleep(2 * time.Second)
-	logger.Debug("\n\nIm returning nil... whyx??????!!\n\n")
-	return nil
-} */
-
-func (s *signalSession) Handshake(ctx context.Context) (err error) {
-
-	logger.Debug("\n\nHere is the stack upon entering \n")
-	debug.PrintStack()
-	logger.Debug("\n\n\n")
+	logger.Debug("\n\nHandshake enter data:\ninitiator: ", s.initiator, "\nLocalAddr: ", s.insecureConn.LocalAddr().String(), "\nRemoteAddr: ", s.insecureConn.RemoteAddr().String(), "\nNetworkName: ", s.insecureConn.LocalAddr().Network(), "\n(RemoteNetworkName: ", s.insecureConn.RemoteAddr().Network(), "\n\n\n")
 
 	// If this is the dialer
 	if s.initiator {

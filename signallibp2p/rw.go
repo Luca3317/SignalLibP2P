@@ -38,10 +38,19 @@ func (s *signalSession) writeMsgInsecure(data []byte) (int, error) {
 	return s.insecureConn.Write(data)
 }
 
-// Read reads from the secure connection, returning plaintext data in `buf`.
-//
-// Honours io.Reader in terms of behaviour.
 func (s *signalSession) Read(buf []byte) (int, error) {
+	s.readLock.Lock()
+	defer s.readLock.Unlock()
+
+	i, err := s.insecureConn.Read(buf)
+	if err != nil {
+		logger.Debug("\n\n\nFAILED TO READ IN READ\n\n\n")
+	}
+
+	return i, err
+}
+
+func (s *signalSession) NoiseRead(buf []byte) (int, error) {
 	s.readLock.Lock()
 	defer s.readLock.Unlock()
 
