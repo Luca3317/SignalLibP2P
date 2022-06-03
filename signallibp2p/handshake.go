@@ -11,6 +11,8 @@ import (
 	"github.com/Luca3317/libsignalcopy/session"
 	"github.com/Luca3317/libsignalcopy/util/retrievable"
 	pool "github.com/libp2p/go-buffer-pool"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 const buffersize = 10000
@@ -82,8 +84,8 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
 
-		// Step 5: Receive first response
-		logger.Debug("\nHandshake-Dialer\nStep 5: Receive first response\n")
+		// Step 5: Receive and decrypt response; Use payload as key
+		logger.Debug("\nHandshake-Dialer\nStep 5: Receive response\n")
 		hbuf := pool.Get(buffersize)
 		defer pool.Put(hbuf)
 
@@ -105,7 +107,42 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		logger.Debug("\nHandshake-Dialer\nReturning; Decrypted: ", deResponse, "\n guess im done? \n")
+		pubkey, err := crypto.UnmarshalPublicKey(deResponse)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to create remote public key from received payload!\n", err, "\n")
+			return err
+		}
+
+		id, err := peer.IDFromPublicKey(pubkey)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to create remoteID from publickey!\n", err, "\n")
+			return err
+		}
+
+		s.remoteKey = pubkey
+		s.remoteID = id
+
+		// Step 6: Send acknowledgement with local Key as payload
+		logger.Debug("\nHandshake-Dialer\nStep 6: Send acknowledgement with local Key as payload\n")
+
+		localKeyM, err := crypto.MarshalPublicKey(s.LocalPublicKey())
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to marshal local key!\n", err, "\n")
+			return err
+		}
+
+		ack, err := s.sessionCipher.Encrypt(localKeyM)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to encrypt marshalled local key!\n", err, "\n")
+			return err
+		}
+
+		i, err = s.writeMsgInsecure(ack.Serialize())
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to write marshalled local key!\n", err, "\n")
+			return err
+		}
+		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
 
 	} else {
 
@@ -167,6 +204,38 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 
+		_, err = s.insecureConn.Read(hbuf)
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to read acknowledgement!\n", err, "\n")
+			return err
+		}
+
+		ackMessage, err := protocol.NewSignalMessageFromBytes(hbuf[:strings.IndexByte(string(hbuf), 0)], serialize.NewJSONSerializer().SignalMessage)
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to make signal message from ack bytes!\n", err, "\n")
+			return err
+		}
+
+		deAck, err := s.sessionCipher.Decrypt(ackMessage)
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to decrypt ack!\n", err, "\n")
+			return err
+		}
+
+		pubkey, err := crypto.UnmarshalPublicKey(deAck)
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to create remote public key from received payload!\n", err, "\n")
+			return err
+		}
+
+		id, err := peer.IDFromPublicKey(pubkey)
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to create remoteID from publickey!\n", err, "\n")
+			return err
+		}
+
+		s.remoteKey = pubkey
+		s.remoteID = id
 	}
 
 	if s.initiator {
