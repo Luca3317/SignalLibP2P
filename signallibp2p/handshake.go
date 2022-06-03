@@ -15,6 +15,7 @@ import (
 	"github.com/Luca3317/libsignalcopy/session"
 	"github.com/Luca3317/libsignalcopy/util/retrievable"
 	pool "github.com/libp2p/go-buffer-pool"
+	"github.com/libp2p/go-libp2p-core/crypto"
 )
 
 const buffersize = 10000
@@ -147,6 +148,27 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 		logger.Debug("\nHandshake-Listener\nDecryption result: ", string(msg), "\n")
 
+		// Step 3: Send Response Message
+		logger.Debug("\nHandshake-Listener\nStep 3: Send Response with localkey as payload\n")
+
+		keyM, err := crypto.MarshalPublicKey(s.LocalPublicKey())
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to marshal localkey!\n", err, "\n")
+			return err
+		}
+
+		response, err := s.sessionCipher.Encrypt(keyM)
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to encrypt localkey!\n", err, "\n")
+			return err
+		}
+
+		i, err = s.writeMsgInsecure(response.Serialize())
+		if err != nil {
+			logger.Debug("\nHandshake-Listener\nReturning; Failed to write localkey!\n", err, "\n")
+			return err
+		}
+		logger.Debug("\nHandshake-Listener\nWrote ", i, " bytes\n")
 	}
 
 	logger.Debug("\nFinished Handshake\n\nExit data:\ninitiator: ", s.initiator,
