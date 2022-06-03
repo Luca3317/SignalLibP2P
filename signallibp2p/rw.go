@@ -3,7 +3,6 @@ package signallibp2p
 import (
 	"encoding/binary"
 	"io"
-	"strings"
 
 	"github.com/Luca3317/libsignalcopy/logger"
 	"github.com/Luca3317/libsignalcopy/protocol"
@@ -33,23 +32,8 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 
 	i, err := s.insecureConn.Read(buf)
 	if err != nil {
-		logger.Debug("\nFailed to Read in READ\n", err, "\n")
-		return i, err
+		logger.Debug("\n\n\nFAILED TO READ IN READ\n\n\n")
 	}
-
-	msg, err := protocol.NewSignalMessageFromBytes(buf[:strings.IndexByte(string(buf), 0)], serialize.NewJSONSerializer().SignalMessage)
-	if err != nil {
-		logger.Debug("\nFailed to Read in READ\n", err, "\n")
-		return i, err
-	}
-
-	dec, err := s.sessionCipher.Decrypt(msg)
-	if err != nil {
-		logger.Debug("\nFailed to Read in READ\n", err, "\n")
-		return i, err
-	}
-
-	copy(buf, dec)
 
 	return i, err
 }
@@ -61,15 +45,9 @@ func (s *signalSession) Write(data []byte) (int, error) {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 
-	enc, err := s.sessionCipher.Encrypt(data[:strings.IndexByte(string(data), 0)])
+	i, err := s.insecureConn.Write(data)
 	if err != nil {
-		logger.Debug("\nFailed to encrypt in WRITE\n", err, "\n")
-		return 0, err
-	}
-
-	i, err := s.insecureConn.Write(enc.Serialize())
-	if err != nil {
-		logger.Debug("\nFailed to Write in WRITE\n", err, "\n")
+		logger.Debug("\n\nFAILED TO WRITE IN WRITE\n\n")
 	}
 
 	return i, err
