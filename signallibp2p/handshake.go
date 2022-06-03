@@ -329,7 +329,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		// Step 3: Create SessionCipher and encrypt init. message
 		logger.Debug("\nHandshake-Dialer\nCreate SessionCipher and encrypt initial message\n")
 		s.sessionCipher = session.NewCipher(&s.sessionBuilder, remoteAddr)
-		plaintext := []byte("")
+		plaintext := []byte("Hallo!")
 		message, err := s.sessionCipher.Encrypt(plaintext)
 		if err != nil {
 			logger.Debug("\nHandshake-Dialer\nReturning; Failed to encrypt data with new cipher\n", err, "\n")
