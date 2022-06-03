@@ -106,7 +106,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
 
 		// Step 5: Receive response; use payload as remote key
-		logger.Debug("\nHandshake-Dialer\nStep 4: Sending initial Message\n")
+		logger.Debug("\nHandshake-Dialer\nStep 5: Receive Response\n")
 		i, err = s.insecureConn.Read(hbuf)
 		if err != nil {
 			logger.Debug("\nHandshake-Dialer\nReturning; Failed to read message!\n", err, "\n")
@@ -141,6 +141,29 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 		s.remoteKey = pubkey
 		s.remoteID = id
+
+		// Step 6: Send Response Message
+		logger.Debug("\nHandshake-Dialer\nStep 5: Send Response with localkey as payload\n")
+
+		keyM, err := crypto.MarshalPublicKey(s.LocalPublicKey())
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to marshal localkey!\n", err, "\n")
+			return err
+		}
+
+		ack, err := s.sessionCipher.Encrypt(keyM)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to encrypt localkey!\n", err, "\n")
+			return err
+		}
+
+		i, err = s.writeMsgInsecure(ack.Serialize())
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to write localkey!\n", err, "\n")
+			return err
+		}
+		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
+		logger.Debug("\nTHE KEY:\n", keyM, "\n")
 
 	} else {
 
@@ -208,6 +231,43 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 		logger.Debug("\nHandshake-Listener\nWrote ", i, " bytes\n")
 		logger.Debug("\nTHE KEY:\n", keyM, "\n")
+
+		// Step 5: Receive response; use payload as remote key
+		logger.Debug("\nHandshake-Dialer\nStep 5: Receiving ACK\n")
+		i, err = s.insecureConn.Read(hbuf)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to read message!\n", err, "\n")
+			return err
+		}
+		logger.Debug("\nHandshake-Dialer\nRead ", i, " bytes\n")
+
+		ack, err := protocol.NewSignalMessageFromBytes(hbuf[:strings.IndexByte(string(hbuf), 0)], serialize.NewJSONSerializer().SignalMessage)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to make signal message from bytes!\n", err, "\n")
+			return err
+		}
+
+		deAck, err := s.sessionCipher.Decrypt(ack)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to decrypt response!\n", err, "\n")
+			return err
+		}
+
+		pubkey, err := crypto.UnmarshalPublicKey(deAck)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to make pubkey from bytes!\n", err, "\n")
+			return err
+		}
+		logger.Debug("\nTHE KEY:\n", pubkey, "\n")
+
+		id, err := peer.IDFromPublicKey(pubkey)
+		if err != nil {
+			logger.Debug("\nHandshake-Dialer\nReturning; Failed to make id!\n", err, "\n")
+			return err
+		}
+
+		s.remoteKey = pubkey
+		s.remoteID = id
 	}
 
 	logger.Debug("\nFinished Handshake\n\nExit data:\ninitiator: ", s.initiator,
