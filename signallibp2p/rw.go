@@ -24,7 +24,10 @@ func (s *signalSession) readNextInsecureMsgLen() (int, error) {
 
 func (s *signalSession) Read(buf []byte) (int, error) {
 
-	i, err := s.insecureConn.Read(buf)
+	// return this if all is written
+	total := len(buf)
+
+	_, err := s.insecureConn.Read(buf)
 	if err != nil {
 		logger.Debug("\n\nFailed to read!\n", err)
 		return 0, err
@@ -48,11 +51,13 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	}
 
 	copy(buf, dec)
-
-	return i, nil
+	return total, nil
 }
 
 func (s *signalSession) Write(data []byte) (int, error) {
+
+	// return this if all is written
+	total := len(data)
 
 	logger.Debug("\nTrying to write: ", string(data))
 
@@ -75,12 +80,12 @@ func (s *signalSession) Write(data []byte) (int, error) {
 	i, err := s.writeMsgInsecure(cmsg.Serialize())
 	if err != nil {
 		logger.Debug("\n\nFailed to write!\n", err)
-		return 0, err
+		return i, err
 	}
 
 	logger.Debug("\nSuccessfully wrote: ", string(data))
 
-	return i, nil
+	return total, nil
 }
 
 // TODO: consider long messages
