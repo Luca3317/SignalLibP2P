@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"io"
 
-	"github.com/Luca3317/libsignalcopy/logger"
 	pool "github.com/libp2p/go-buffer-pool"
 	"golang.org/x/crypto/poly1305"
 )
@@ -46,26 +45,26 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	logger.Debug("Read; next msg will be ", nextMsgLen)
+	//	logger.Debug("Read; next msg will be ", nextMsgLen)
 
 	// If the buffer is atleast as big as the encrypted message size,
 	// we can read AND decrypt in place.
 	if len(buf) >= nextMsgLen {
-		logger.Debug("buffer was big enough")
+		//	logger.Debug("buffer was big enough")
 		if err := s.readNextMsgInsecure(buf[:nextMsgLen]); err != nil {
 			return 0, err
 		}
-		logger.Debug("read ", buf[:nextMsgLen])
+		//		logger.Debug("read ", buf[:nextMsgLen])
 
 		dbuf, err := s.decrypt(buf[:nextMsgLen])
 		if err != nil {
 			return 0, err
 		}
-		logger.Debug("decrypted ", dbuf)
+		//		logger.Debug("decrypted ", dbuf)
 
 		return len(dbuf), nil
 	}
-	logger.Debug("buffer was NOT big enough")
+	//	logger.Debug("buffer was NOT big enough")
 
 	// otherwise, we get a buffer from the pool so we can read the message into it
 	// and then decrypt in place, since we're retaining the buffer (or a view thereof).
@@ -73,12 +72,12 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	if err := s.readNextMsgInsecure(cbuf); err != nil {
 		return 0, err
 	}
-	logger.Debug("read ", cbuf)
+	//	logger.Debug("read ", cbuf)
 
 	if s.qbuf, err = s.decrypt(cbuf); err != nil {
 		return 0, err
 	}
-	logger.Debug("decrypted ", s.qbuf)
+	//	logger.Debug("decrypted ", s.qbuf)
 
 	// copy as many bytes as we can; update seek pointer.
 	s.qseek = copy(buf, s.qbuf)
@@ -118,12 +117,12 @@ func (s *signalSession) Write(data []byte) (int, error) {
 			return 0, err
 		}
 
-		logger.Debug("\nI was gonna write ", string(data), " -> ", b)
+		//logger.Debug("\nI was gonna write ", string(data), " -> ", b)
 		var prefixbuf [2]byte
 		sief := append(prefixbuf[:], b...)
-		logger.Debug("\nI would now write ", sief)
+		//	logger.Debug("\nI would now write ", sief)
 		binary.BigEndian.PutUint16(sief, uint16(len(sief)-LengthPrefixLength))
-		logger.Debug("\nI will now write ", sief)
+		//	logger.Debug("\nI will now write ", sief)
 
 		_, err = s.writeMsgInsecure(sief)
 		if err != nil {
@@ -148,50 +147,6 @@ func (s *signalSession) readNextMsgInsecure(buf []byte) error {
 	_, err := io.ReadFull(s.insecureReader, buf)
 	return err
 }
-
-/* func (s *signalSession) Read(buf []byte) (int, error) {
-	s.readLock.Lock()
-	defer s.readLock.Unlock()
-
-	logger.Debug("reading... ")
-	_, err := s.insecureConn.Read(buf)
-	if err != nil {
-		logger.Debug("FAILED TO READ")
-	} else {
-		logger.Debug("Success; read ", buf, " (", string(buf), ")")
-	}
-
-	dec, err := s.decrypt(buf)
-	if err != nil {
-		return len(buf), err
-	}
-
-	copy(buf, dec)
-
-	return len(buf), nil
-}
-
-func (s *signalSession) Write(data []byte) (int, error) {
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
-
-	total := len(data)
-	enc, err := s.encrypt(data)
-	if err != nil {
-		return 0, err
-	}
-
-	logger.Debug("writing ", enc, " (", string(enc), ") ...")
-	_, err = s.insecureConn.Write(enc)
-	if err != nil {
-		logger.Debug("FAILED TO WRITE")
-		return total, err
-	} else {
-		logger.Debug("Success;")
-	}
-
-	return total, nil
-} */
 
 // writeMsgInsecure writes to the insecureConn conn.
 // data will be prefixed with its length in bytes, written as a 16-bit uint in network order.
