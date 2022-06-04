@@ -282,7 +282,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 		logger.Debug("Im leaving my handshake\n")
 		logger.Debug("First sending test message\n")
-		i, err = s.Write([]byte("My test message... wwhats up"))
+		i, err = s.Write(append([]byte("My test message... wwhats up"), 0))
 		if err != nil {
 			logger.Debug("I failed to write for some reason\n")
 			logger.Debug(err)
