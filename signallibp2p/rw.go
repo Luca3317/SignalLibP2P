@@ -22,35 +22,35 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	logger.Debug("Reading...")
 	i, err := s.insecureConn.Read(buf)
 	if err != nil {
-		logger.Debug("FAIL\n")
+		logger.Debug("Reading FAIL\n")
 		logger.Debug(err)
 		return i, err
 	} else {
-		logger.Debug("SUCC\n")
+		logger.Debug("Reading SUCC\n")
 		logger.Debug("Read: ", buf)
 	}
 
 	logger.Debug("Making message from ", buf[:strings.IndexByte(string(buf), 0)], "...")
 	msg, err := protocol.NewSignalMessageFromBytes(buf[:strings.IndexByte(string(buf), 0)], serialize.NewJSONSerializer().SignalMessage)
 	if err != nil {
-		logger.Debug("FAIL\n")
+		logger.Debug("Making msg FAIL\n")
 		logger.Debug(err)
 		return i, err
 	} else {
-		logger.Debug("SUCC\n")
+		logger.Debug("Making msg SUCC\n")
 	}
 
 	logger.Debug("Decrypting ", msg, "...")
 	dec, err := s.sessionCipher.Decrypt(msg)
 	if err != nil {
-		logger.Debug("FAIL\n")
+		logger.Debug("Decrypting FAIL\n")
 		logger.Debug(err)
 		return i, err
 	} else {
-		logger.Debug("SUCC\n")
+		logger.Debug("Decrypting UCC\n")
 	}
 
-	logger.Debug("Result\n", string(dec), "\n", dec)
+	logger.Debug("Read Result\n", string(dec), "\n", dec)
 	return i, nil
 }
 
@@ -64,21 +64,21 @@ func (s *signalSession) Write(data []byte) (int, error) {
 	logger.Debug("Encrypting ", string(data), "...")
 	msg, err := s.sessionCipher.Encrypt(data)
 	if err != nil {
-		logger.Debug("FAIL\n")
+		logger.Debug("Encrypt FAIL\n")
 		logger.Debug(err)
 		return 0, err
 	} else {
-		logger.Debug("SUCC\n")
+		logger.Debug("Encrypt SUCC\n")
 	}
 
 	logger.Debug("Writing ", msg.Serialize(), "...")
 	i, err := s.insecureConn.Write(msg.Serialize())
 	if err != nil {
-		logger.Debug("FAIL\n")
+		logger.Debug("Write FAIL\n")
 		logger.Debug(err)
 		return i, err
 	} else {
-		logger.Debug("SUCC\n")
+		logger.Debug("Write SUCC\n")
 	}
 
 	return i, nil
