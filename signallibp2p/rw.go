@@ -12,7 +12,7 @@ const MaxPlaintextLength = 4096
 const LengthPrefixLength = 2
 const MaxTransportMsgLength = 100000
 
-func (s *signalSession) Redad(buf []byte) (int, error) {
+func (s *signalSession) Read(buf []byte) (int, error) {
 	s.readLock.Lock()
 	defer s.readLock.Unlock()
 
@@ -29,7 +29,7 @@ func (s *signalSession) Redad(buf []byte) (int, error) {
 	return i, err
 }
 
-func (s *signalSession) Wridte(data []byte) (int, error) {
+func (s *signalSession) Write(data []byte) (int, error) {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 
@@ -43,13 +43,34 @@ func (s *signalSession) Wridte(data []byte) (int, error) {
 		logger.Debug("Success;")
 	}
 
+	logger.Debug("test: prolly wont work (prolly shouldnt either\n")
+	logger.Debug("encrypting ", string(data))
+	msg, err := s.sessionCipher.Encrypt(data)
+	if err != nil {
+		logger.Debug("failed to encrypt ???")
+		return i, err
+	}
+	logger.Debug("Result: ", msg.Serialize())
+	newmsg, err := protocol.NewSignalMessageFromBytes(msg.Serialize(), serialize.NewJSONSerializer().SignalMessage)
+	if err != nil {
+		logger.Debug("failed to make sig message ???")
+		return i, err
+	}
+	sief, err := s.sessionCipher.Decrypt(newmsg)
+	if err != nil {
+		logger.Debug("failed to decrypt ???")
+		return i, err
+	}
+
+	logger.Debug("Original: ", string(data), "\nNew: ", string(sief))
+
 	return i, err
 }
 
 // TODO: consider long messages
 // encrypt
 // etc
-func (s *signalSession) Read(buf []byte) (int, error) {
+func (s *signalSession) Reads(buf []byte) (int, error) {
 	s.readLock.Lock()
 	defer s.readLock.Unlock()
 
@@ -91,7 +112,7 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 // TODO: consider long messages
 // encrypt
 // etc
-func (s *signalSession) Write(data []byte) (int, error) {
+func (s *signalSession) Writes(data []byte) (int, error) {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 
