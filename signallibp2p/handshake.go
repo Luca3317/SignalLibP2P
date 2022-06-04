@@ -3,8 +3,6 @@ package signallibp2p
 import (
 	"context"
 	"fmt"
-	"log"
-	"math/rand"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -303,34 +301,5 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		"\nLocalPrivKey: ", s.LocalPrivateKey(),
 		"\nRemotePubKey: ", s.RemotePublicKey(), "\n\n\n")
 
-	if s.initiator {
-
-		length := -1
-		for i := 10; i <= 100; i++ {
-			bytes := []byte(StringWithCharset(i, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
-			msg, err := s.sessionCipher.Encrypt(bytes)
-			if err != nil {
-				log.Fatal("failed to encrypt ", string(bytes))
-			}
-
-			length = (len(msg.Serialize()) - len(bytes))
-
-			//fmt.Println("generated string (len ", len(bytes), "): ", bytes, "\nMsg (len ", len(msg.Serialize()), "): ", msg.Serialize(), "\nDiff: ", length)
-			fmt.Println(i, ": ", length)
-		}
-	} else {
-		time.Sleep(10 * time.Second)
-	}
 	return nil
-}
-
-var seededRand *rand.Rand = rand.New(
-	rand.NewSource(time.Now().UnixNano()))
-
-func StringWithCharset(length int, charset string) string {
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
-	}
-	return string(b)
 }
