@@ -179,7 +179,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 	} else {
 
 		// Step 0: Preparations
-		logger.Debug("\nHandshake-Listener\nStep 0: Preparations\n")
+		logger.Debug("\nHandshake-Listener\nStep 0: Preparation\n")
 		remoteAddr := protocol.NewSignalAddress("dialer", 2)
 
 		s.sessionBuilder = *session.NewBuilder(
