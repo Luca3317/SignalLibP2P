@@ -301,51 +301,51 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		"\nLocalPrivKey: ", s.LocalPrivateKey(),
 		"\nRemotePubKey: ", s.RemotePublicKey(), "\n\n\n")
 
-	if s.initiator {
+	/* 	if s.initiator {
 
-		sief := new([]byte)
-		logger.Debug("sief is ", len(*sief), " long")
-		logger.Debug("\nDialer; Testing read")
-		if _, err = s.Read(*sief); err != nil {
-			logger.Debug("\nDialer; Failed to read!")
-			logger.Debug(err)
-			return err
-		} else {
-			logger.Debug("\nDialer; Read succeeded!")
-			logger.Debug("Read: ", string(*sief), " (raw: ", sief, " )")
-		}
+	   		sief := new([]byte)
+	   		logger.Debug("sief is ", len(*sief), " long")
+	   		logger.Debug("\nDialer; Testing read")
+	   		if _, err = s.Read(*sief); err != nil {
+	   			logger.Debug("\nDialer; Failed to read!")
+	   			logger.Debug(err)
+	   			return err
+	   		} else {
+	   			logger.Debug("\nDialer; Read succeeded!")
+	   			logger.Debug("Read: ", string(*sief), " (raw: ", sief, " )")
+	   		}
 
-		logger.Debug("\nListener; Testing Write")
-		if _, err = s.Write([]byte("why hi, this is my test response1!!!11!")); err != nil {
-			logger.Debug("\nListener; Failed to write!")
-			logger.Debug(err)
-			return err
-		} else {
-			logger.Debug("\nListener; Write successful!")
-		}
-	} else {
+	   		logger.Debug("\nListener; Testing Write")
+	   		if _, err = s.Write([]byte("why hi, this is my test response1!!!11!")); err != nil {
+	   			logger.Debug("\nListener; Failed to write!")
+	   			logger.Debug(err)
+	   			return err
+	   		} else {
+	   			logger.Debug("\nListener; Write successful!")
+	   		}
+	   	} else {
 
-		logger.Debug("\nListener; Testing Write")
-		if _, err = s.Write([]byte("hello there! this is my test message")); err != nil {
-			logger.Debug("\nListener; Failed to write!")
-			logger.Debug(err)
-			return err
-		} else {
-			logger.Debug("\nListener; Write successful!")
-		}
+	   		logger.Debug("\nListener; Testing Write")
+	   		if _, err = s.Write([]byte("hello there! this is my test message")); err != nil {
+	   			logger.Debug("\nListener; Failed to write!")
+	   			logger.Debug(err)
+	   			return err
+	   		} else {
+	   			logger.Debug("\nListener; Write successful!")
+	   		}
 
-		sief := new([]byte)
-		logger.Debug("sief is ", len(*sief), " long")
-		logger.Debug("\nListener; Testing read")
-		if _, err = s.Read(*sief); err != nil {
-			logger.Debug("\nListener; Failed to read!")
-			logger.Debug(err)
-			return err
-		} else {
-			logger.Debug("\nListener; Read succeeded!")
-			logger.Debug("Read: ", string(*sief), " (raw: ", sief, " )")
-		}
-	}
+	   		sief := new([]byte)
+	   		logger.Debug("sief is ", len(*sief), " long")
+	   		logger.Debug("\nListener; Testing read")
+	   		if _, err = s.Read(*sief); err != nil {
+	   			logger.Debug("\nListener; Failed to read!")
+	   			logger.Debug(err)
+	   			return err
+	   		} else {
+	   			logger.Debug("\nListener; Read succeeded!")
+	   			logger.Debug("Read: ", string(*sief), " (raw: ", sief, " )")
+	   		}
+	   	} */
 
 	return nil
 }
