@@ -165,16 +165,16 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
 		logger.Debug("\nTHE KEY:\n", keyM, "\n")
 
-		logger.Debug("Im leaving my handshake\n")
-		logger.Debug("First receiving test message\n")
-		var mybuf []byte
-		i, err = s.Read(mybuf)
-		if err != nil {
-			logger.Debug("I failed to read for some reason \n")
-			logger.Debug(err)
-		} else {
-			logger.Debug("Did it !\n", string(mybuf), "\n")
-		}
+		/* 		logger.Debug("Im leaving my handshake\n")
+		   		logger.Debug("First receiving test message\n")
+		   		var mybuf []byte
+		   		i, err = s.Read(mybuf)
+		   		if err != nil {
+		   			logger.Debug("I failed to read for some reason \n")
+		   			logger.Debug(err)
+		   		} else {
+		   			logger.Debug("Did it !\n", string(mybuf), "\n")
+		   		} */
 
 	} else {
 
@@ -280,15 +280,15 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		s.remoteKey = pubkey
 		s.remoteID = id
 
-		logger.Debug("Im leaving my handshake\n")
-		logger.Debug("First sending test message\n")
-		i, err = s.Write(append([]byte("My test message... wwhats up"), 0))
-		if err != nil {
-			logger.Debug("I failed to write for some reason\n")
-			logger.Debug(err)
-		} else {
-			logger.Debug("Did it !\n")
-		}
+		/* 		logger.Debug("Im leaving my handshake\n")
+		   		logger.Debug("First sending test message\n")
+		   		i, err = s.Write(append([]byte("My test message... wwhats up"), 0))
+		   		if err != nil {
+		   			logger.Debug("I failed to write for some reason\n")
+		   			logger.Debug(err)
+		   		} else {
+		   			logger.Debug("Did it !\n")
+		   		} */
 	}
 
 	logger.Debug("\nFinished Handshake\n\nExit data:\ninitiator: ", s.initiator,
