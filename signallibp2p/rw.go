@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"io"
 
+	"github.com/Luca3317/libsignalcopy/logger"
 	pool "github.com/libp2p/go-buffer-pool"
 	"golang.org/x/crypto/poly1305"
 )
@@ -109,7 +110,9 @@ func (s *signalSession) Write(data []byte) (int, error) {
 			return 0, err
 		}
 
+		logger.Debug("\nI was gonna write ", string(data), " -> ", b)
 		binary.BigEndian.PutUint16(b, uint16(len(b)-LengthPrefixLength))
+		logger.Debug("\nI will now write ", b)
 
 		_, err = s.writeMsgInsecure(b)
 		if err != nil {
