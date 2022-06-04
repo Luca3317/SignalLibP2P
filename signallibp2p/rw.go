@@ -16,14 +16,30 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	s.readLock.Lock()
 	defer s.readLock.Unlock()
 
-	return s.insecureConn.Read(buf)
+	logger.Debug("reading... \n")
+	i, err := s.insecureConn.Read(buf)
+	if err != nil {
+		logger.Debug("FAILED TO READ\n")
+	} else {
+		logger.Debug("Success; read ", buf, " (", string(buf), ")")
+	}
+
+	return i, err
 }
 
 func (s *signalSession) Write(data []byte) (int, error) {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 
-	return s.insecureConn.Write(data)
+	logger.Debug("writing ", data, " (", string(data), ") ...")
+	i, err := s.insecureConn.Write(data)
+	if err != nil {
+		logger.Debug("FAILED TO Write\n")
+	} else {
+		logger.Debug("Success;")
+	}
+
+	return i, err
 }
 
 // TODO: consider long messages
