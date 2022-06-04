@@ -45,26 +45,21 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	//	logger.Debug("Read; next msg will be ", nextMsgLen)
 
 	// If the buffer is atleast as big as the encrypted message size,
 	// we can read AND decrypt in place.
 	if len(buf) >= nextMsgLen {
-		//	logger.Debug("buffer was big enough")
 		if err := s.readNextMsgInsecure(buf[:nextMsgLen]); err != nil {
 			return 0, err
 		}
-		//		logger.Debug("read ", buf[:nextMsgLen])
 
 		dbuf, err := s.decrypt(buf[:nextMsgLen])
 		if err != nil {
 			return 0, err
 		}
-		//		logger.Debug("decrypted ", dbuf)
 
 		return len(dbuf), nil
 	}
-	//	logger.Debug("buffer was NOT big enough")
 
 	// otherwise, we get a buffer from the pool so we can read the message into it
 	// and then decrypt in place, since we're retaining the buffer (or a view thereof).
@@ -72,12 +67,10 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	if err := s.readNextMsgInsecure(cbuf); err != nil {
 		return 0, err
 	}
-	//	logger.Debug("read ", cbuf)
 
 	if s.qbuf, err = s.decrypt(cbuf); err != nil {
 		return 0, err
 	}
-	//	logger.Debug("decrypted ", s.qbuf)
 
 	// copy as many bytes as we can; update seek pointer.
 	s.qseek = copy(buf, s.qbuf)
@@ -117,12 +110,10 @@ func (s *signalSession) Write(data []byte) (int, error) {
 			return 0, err
 		}
 
-		//logger.Debug("\nI was gonna write ", string(data), " -> ", b)
+		// TODO
 		var prefixbuf [2]byte
 		sief := append(prefixbuf[:], b...)
-		//	logger.Debug("\nI would now write ", sief)
 		binary.BigEndian.PutUint16(sief, uint16(len(sief)-LengthPrefixLength))
-		//	logger.Debug("\nI will now write ", sief)
 
 		_, err = s.writeMsgInsecure(sief)
 		if err != nil {
