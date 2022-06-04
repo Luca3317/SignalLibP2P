@@ -306,7 +306,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 	if s.initiator {
 
 		length := -1
-		for i := 10; i <= 10000; i++ {
+		for i := 10; i <= 100; i++ {
 			bytes := []byte(StringWithCharset(i, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
 			msg, err := s.sessionCipher.Encrypt(bytes)
 			if err != nil {
@@ -315,7 +315,8 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 			length = (len(msg.Serialize()) - len(bytes))
 
-			fmt.Println("generated string (len ", len(bytes), "): ", bytes, "\nMsg (len ", len(msg.Serialize()), "): ", msg.Serialize(), "\nDiff: ", length)
+			//fmt.Println("generated string (len ", len(bytes), "): ", bytes, "\nMsg (len ", len(msg.Serialize()), "): ", msg.Serialize(), "\nDiff: ", length)
+			fmt.Println(i, ": ", length)
 		}
 	} else {
 		time.Sleep(10 * time.Second)
