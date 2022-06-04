@@ -2,7 +2,6 @@ package signallibp2p
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -55,8 +54,9 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 	sief := []byte("Hallo!")
 	copy(hbuf, sief)
-	logger.Debug("\nTHIS IS THE PUTINT TEST;\nBEFORE:\n", hbuf, " (", string(hbuf), ")")
-	binary.BigEndian.PutUint16(hbuf, uint16(len(hbuf)-LengthPrefixLength))
+	logger.Debug("\nTHIS IS THE PUTINT TEST;\nBEFORE:\n", hbuf, " (", string(hbuf), ") (len: ", len(hbuf), ")")
+
+	//binary.BigEndian.PutUint16(hbuf, uint16(len(hbuf)-LengthPrefixLength))
 	logger.Debug("\nAFTER:\n", hbuf, " (", string(hbuf), ")")
 
 	if s.initiator {
