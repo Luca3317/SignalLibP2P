@@ -10,9 +10,7 @@ const MaxTransportMsgLength = 0xffff
 
 func (s *signalSession) Read(buf []byte) (int, error) {
 	s.readLock.Lock()
-	s.writeLock.Lock()
 	defer s.readLock.Unlock()
-	defer s.writeLock.Unlock()
 
 	logger.Debug("reading... ")
 	i, err := s.insecureConn.Read(buf)
@@ -29,9 +27,7 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 
 func (s *signalSession) Write(data []byte) (int, error) {
 	s.writeLock.Lock()
-	s.readLock.Lock()
 	defer s.writeLock.Unlock()
-	defer s.readLock.Unlock()
 
 	//	total := len(data)
 
