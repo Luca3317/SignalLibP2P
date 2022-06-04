@@ -31,7 +31,7 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	}
 
 	logger.Debug("Making message from ", buf[:strings.IndexByte(string(buf), 0)], "...")
-	msg, err := protocol.NewSignalMessageFromBytes(buf[:strings.IndexByte(string(buf), 0)], serialize.NewJSONSerializer().SignalMessage)
+	msg, err := protocol.NewSignalMessageFromBytes(buf, serialize.NewJSONSerializer().SignalMessage)
 	if err != nil {
 		logger.Debug("Making msg FAIL\n")
 		logger.Debug(err)
