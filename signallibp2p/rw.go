@@ -46,6 +46,7 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	logger.Debug("Read; next msg will be ", nextMsgLen)
 
 	// If the buffer is atleast as big as the encrypted message size,
 	// we can read AND decrypt in place.
