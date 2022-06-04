@@ -312,20 +312,14 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			if err != nil {
 				log.Fatal("failed to encrypt ", string(bytes))
 			}
-			if i == 10 {
-				length = (len(msg.Serialize()) - len(bytes))
-			} else {
-				if length != (len(msg.Serialize()) - len(bytes)) {
-					log.Fatal("There was a size descrepancy: for ", i, " it was ", (len(msg.Serialize()) - len(bytes)), " but for ", (i - 1), " it was ", length)
-				}
-			}
-			fmt.Println("generated string ", bytes, "\nLen ue: ", len(bytes), " len e: ", len(msg.Serialize()), " diff: ", (len(msg.Serialize()) - len(bytes)))
+
+			length = (len(msg.Serialize()) - len(bytes))
+
+			fmt.Println("generated string (len ", len(bytes), "): ", bytes, "\nMsg (len ", len(msg.Serialize()), "): ", msg.Serialize(), "\nDiff: ", length)
 		}
-
 	} else {
-		time.Sleep(100000)
+		time.Sleep(10 * time.Second)
 	}
-
 	return nil
 }
 
