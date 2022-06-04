@@ -98,6 +98,7 @@ func (s *signalSession) Write(data []byte) (int, error) {
 		total   = len(data)
 	)
 
+	// TODO replace case 1, check how big metadata is for ciphertext compared to plaintext
 	if total < MaxPlaintextLength {
 		cbuf = pool.Get(total + poly1305.TagSize + LengthPrefixLength)
 	} else {
@@ -120,6 +121,7 @@ func (s *signalSession) Write(data []byte) (int, error) {
 		logger.Debug("\nI was gonna write ", string(data), " -> ", b)
 		var prefixbuf [2]byte
 		copy(b, append(prefixbuf[:], b...))
+		logger.Debug("\nI would now write ", b)
 		binary.BigEndian.PutUint16(b, uint16(len(b)-LengthPrefixLength))
 		logger.Debug("\nI will now write ", b)
 
