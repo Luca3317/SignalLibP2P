@@ -12,7 +12,7 @@ const MaxPlaintextLength = 4096
 const LengthPrefixLength = 2
 const MaxTransportMsgLength = 100000
 
-func (s *signalSession) Read(buf []byte) (int, error) {
+func (s *signalSession) Reads(buf []byte) (int, error) {
 	s.readLock.Lock()
 	defer s.readLock.Unlock()
 
@@ -29,7 +29,7 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	return i, err
 }
 
-func (s *signalSession) Write(data []byte) (int, error) {
+func (s *signalSession) Writes(data []byte) (int, error) {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 
@@ -49,8 +49,10 @@ func (s *signalSession) Write(data []byte) (int, error) {
 // TODO: consider long messages
 // encrypt
 // etc
-func (s *signalSession) Reads(buf []byte) (int, error) {
+func (s *signalSession) Read(buf []byte) (int, error) {
 	s.readLock.Lock()
+	s.writeLock.Lock()
+	s.writeLock.Unlock()
 	defer s.readLock.Unlock()
 
 	logger.Debug("Reading...")
@@ -91,8 +93,10 @@ func (s *signalSession) Reads(buf []byte) (int, error) {
 // TODO: consider long messages
 // encrypt
 // etc
-func (s *signalSession) Writes(data []byte) (int, error) {
+func (s *signalSession) Write(data []byte) (int, error) {
 	s.writeLock.Lock()
+	s.readLock.Lock()
+	defer s.readLock.Unlock()
 	defer s.writeLock.Unlock()
 
 	total := len(data)
