@@ -52,13 +52,6 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 	hbuf := pool.Get(buffersize)
 	defer pool.Put(hbuf)
 
-	sief := []byte("Hallo!")
-	copy(hbuf, sief)
-	logger.Debug("\nTHIS IS THE PUTINT TEST;\nBEFORE:\n", hbuf, " (", string(hbuf), ") (len: ", len(hbuf), ")")
-
-	//binary.BigEndian.PutUint16(hbuf, uint16(len(hbuf)-LengthPrefixLength))
-	logger.Debug("\nAFTER:\n", hbuf, " (", string(hbuf), ")")
-
 	if s.initiator {
 
 		// Step 0: Preparations (including ReadBundle and session.NewBuilder)
@@ -172,8 +165,15 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
 		logger.Debug("\nTHE KEY:\n", keyM, "\n")
 
-		s.Read(hbuf)
-		logger.Debug("\n\n\nReceived a test message. Error = ", err, " I: ", i, "\n", string(hbuf))
+		logger.Debug("Im leaving my handshake\n")
+		logger.Debug("First receiving test message\n")
+		i, err = s.Read(hbuf)
+		if err == nil {
+			logger.Debug("I failed to read for some reason\n")
+			logger.Debug(err)
+		} else {
+			logger.Debug("Did it !\n")
+		}
 
 	} else {
 
@@ -279,9 +279,15 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		s.remoteKey = pubkey
 		s.remoteID = id
 
-		bufffer := []byte("This is a test message!")
-		i, err = s.Write(bufffer)
-		logger.Debug("\n\n\nSent a test message. Error = ", err, " I: ", i)
+		logger.Debug("Im leaving my handshake\n")
+		logger.Debug("First sending test message\n")
+		i, err = s.Write([]byte("My test message... wwhats up"))
+		if err == nil {
+			logger.Debug("I failed to write for some reason\n")
+			logger.Debug(err)
+		} else {
+			logger.Debug("Did it !\n")
+		}
 	}
 
 	logger.Debug("\nFinished Handshake\n\nExit data:\ninitiator: ", s.initiator,
