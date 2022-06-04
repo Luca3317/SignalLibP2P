@@ -335,15 +335,15 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			logger.Debug("\nListener; Write successful!")
 		}
 
-		var sief []byte
+		sief := new([]byte)
 		logger.Debug("\nListener; Testing read")
-		if _, err = s.Read(sief); err != nil {
+		if _, err = s.Read(*sief); err != nil {
 			logger.Debug("\nListener; Failed to read!")
 			logger.Debug(err)
 			return err
 		} else {
 			logger.Debug("\nListener; Read succeeded!")
-			logger.Debug("Read: ", string(sief), " (raw: ", sief, " )")
+			logger.Debug("Read: ", string(*sief), " (raw: ", sief, " )")
 		}
 	}
 
