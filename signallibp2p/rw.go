@@ -61,6 +61,8 @@ func (s *signalSession) Write(data []byte) (int, error) {
 	s.writeLock.Lock()
 	defer s.writeLock.Unlock()
 
+	total := len(data)
+
 	logger.Debug("Encrypting ", string(data), "...")
 	msg, err := s.sessionCipher.Encrypt(data)
 	if err != nil {
@@ -72,16 +74,16 @@ func (s *signalSession) Write(data []byte) (int, error) {
 	}
 
 	logger.Debug("Writing ", msg.Serialize(), "...")
-	i, err := s.insecureConn.Write(msg.Serialize())
+	_, err = s.insecureConn.Write(msg.Serialize())
 	if err != nil {
 		logger.Debug("Write FAIL\n")
 		logger.Debug(err)
-		return i, err
+		return total, err
 	} else {
 		logger.Debug("Write SUCC\n")
 	}
 
-	return i, nil
+	return total, nil
 }
 
 // writeMsgInsecure writes to the insecureConn conn.
