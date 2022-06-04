@@ -168,7 +168,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		logger.Debug("Im leaving my handshake\n")
 		logger.Debug("First receiving test message\n")
 		i, err = s.Read(hbuf)
-		if err == nil {
+		if err != nil {
 			logger.Debug("I failed to read for some reason\n")
 			logger.Debug(err)
 		} else {
@@ -282,7 +282,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		logger.Debug("Im leaving my handshake\n")
 		logger.Debug("First sending test message\n")
 		i, err = s.Write([]byte("My test message... wwhats up"))
-		if err == nil {
+		if err != nil {
 			logger.Debug("I failed to write for some reason\n")
 			logger.Debug(err)
 		} else {
