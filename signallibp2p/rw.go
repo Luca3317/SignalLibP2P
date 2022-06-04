@@ -120,12 +120,13 @@ func (s *signalSession) Write(data []byte) (int, error) {
 
 		logger.Debug("\nI was gonna write ", string(data), " -> ", b)
 		var prefixbuf [2]byte
-		copy(b, append(prefixbuf[:], b...))
-		logger.Debug("\nI would now write ", b)
-		binary.BigEndian.PutUint16(b, uint16(len(b)-LengthPrefixLength))
-		logger.Debug("\nI will now write ", b)
+		var sief []byte
+		copy(sief, append(prefixbuf[:], b...))
+		logger.Debug("\nI would now write ", sief)
+		binary.BigEndian.PutUint16(sief, uint16(len(sief)-LengthPrefixLength))
+		logger.Debug("\nI will now write ", sief)
 
-		_, err = s.writeMsgInsecure(b)
+		_, err = s.writeMsgInsecure(sief)
 		if err != nil {
 			return written, err
 		}
