@@ -65,6 +65,7 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 
 		return len(dbuf), nil
 	}
+	logger.Debug("buffer was NOT big enough")
 
 	// otherwise, we get a buffer from the pool so we can read the message into it
 	// and then decrypt in place, since we're retaining the buffer (or a view thereof).
@@ -72,10 +73,12 @@ func (s *signalSession) Read(buf []byte) (int, error) {
 	if err := s.readNextMsgInsecure(cbuf); err != nil {
 		return 0, err
 	}
+	logger.Debug("read ", cbuf)
 
 	if s.qbuf, err = s.decrypt(cbuf); err != nil {
 		return 0, err
 	}
+	logger.Debug("decrypted ", s.qbuf)
 
 	// copy as many bytes as we can; update seek pointer.
 	s.qseek = copy(buf, s.qbuf)
