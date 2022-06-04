@@ -172,6 +172,9 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		logger.Debug("\nHandshake-Dialer\nWrote ", i, " bytes\n")
 		logger.Debug("\nTHE KEY:\n", keyM, "\n")
 
+		s.Read(hbuf)
+		logger.Debug("\n\n\nReceived a test message. Error = ", err, " I: ", i, "\n", string(hbuf))
+
 	} else {
 
 		// Step 0: Preparations
@@ -276,6 +279,9 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		s.remoteKey = pubkey
 		s.remoteID = id
 
+		bufffer := []byte("This is a test message!")
+		i, err = s.Write(bufffer)
+		logger.Debug("\n\n\nSent a test message. Error = ", err, " I: ", i)
 	}
 
 	logger.Debug("\nFinished Handshake\n\nExit data:\ninitiator: ", s.initiator,
