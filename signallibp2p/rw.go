@@ -43,27 +43,6 @@ func (s *signalSession) Write(data []byte) (int, error) {
 		logger.Debug("Success;")
 	}
 
-	logger.Debug("test: prolly wont work (prolly shouldnt either\n")
-	logger.Debug("encrypting ", string(data))
-	msg, err := s.sessionCipher.Encrypt(data)
-	if err != nil {
-		logger.Debug("failed to encrypt ???")
-		return i, err
-	}
-	logger.Debug("Result: ", msg.Serialize())
-	newmsg, err := protocol.NewSignalMessageFromBytes(msg.Serialize(), serialize.NewJSONSerializer().SignalMessage)
-	if err != nil {
-		logger.Debug("failed to make sig message ???")
-		return i, err
-	}
-	sief, err := s.sessionCipher.Decrypt(newmsg)
-	if err != nil {
-		logger.Debug("failed to decrypt ???")
-		return i, err
-	}
-
-	logger.Debug("Original: ", string(data), "\nNew: ", string(sief))
-
 	return i, err
 }
 
