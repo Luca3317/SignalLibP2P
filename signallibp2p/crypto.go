@@ -2,7 +2,6 @@ package signallibp2p
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/Luca3317/libsignalcopy/logger"
 	"github.com/Luca3317/libsignalcopy/protocol"
@@ -19,6 +18,8 @@ func (s *signalSession) encrypt(plaintext []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	logger.Debug("encrypted a message :", string(plaintext), " -> ", string(cipher.Serialize()))
+
 	return cipher.Serialize(), nil
 }
 
@@ -27,7 +28,7 @@ func (s *signalSession) decrypt(ciphertext []byte) ([]byte, error) {
 		return nil, errors.New("Cannot decrypt; handshake incomplete")
 	}
 
-	msg, err := protocol.NewSignalMessageFromBytes(ciphertext[:strings.IndexByte(string(ciphertext), 0)], serialize.NewJSONSerializer().SignalMessage)
+	msg, err := protocol.NewSignalMessageFromBytes(ciphertext, serialize.NewJSONSerializer().SignalMessage)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +38,7 @@ func (s *signalSession) decrypt(ciphertext []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	logger.Debug("decrypted a message :", string(plain))
+	logger.Debug("decrypted a message :", string(ciphertext), " -> ", string(plain))
 
 	return plain, nil
 }
