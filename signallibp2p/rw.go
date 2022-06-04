@@ -2,16 +2,23 @@ package signallibp2p
 
 import (
 	"encoding/binary"
-	"errors"
 	"io"
 
 	"github.com/Luca3317/libsignalcopy/logger"
 	"github.com/Luca3317/libsignalcopy/protocol"
 	"github.com/Luca3317/libsignalcopy/serialize"
+	pool "github.com/libp2p/go-buffer-pool"
+	"golang.org/x/crypto/poly1305"
 )
 
-// TODO: Insecure functions copied from noise; might be wrong for signal
-// this shit dont work
+// Read reads from the secure connection, returning plaintext data in `buf`.
+//
+// Honours io.Reader in terms of behaviour.
+func (s *signalSession) Read(buf []byte) (int, error) {
+
+	return s.qseek, nil
+}
+
 // readNextInsecureMsgLen reads the length of the next message on the insecureConn channel.
 func (s *signalSession) readNextInsecureMsgLen() (int, error) {
 	_, err := io.ReadFull(s.insecureReader, s.rlen[:])
@@ -22,70 +29,46 @@ func (s *signalSession) readNextInsecureMsgLen() (int, error) {
 	return int(binary.BigEndian.Uint16(s.rlen[:])), err
 }
 
-func (s *signalSession) Read(buf []byte) (int, error) {
-
-	// return this if all is written
-	total := len(buf)
-
-	_, err := s.insecureConn.Read(buf)
-	if err != nil {
-		logger.Debug("\n\nFailed to read!\n", err)
-		return 0, err
-	}
-
-	msg, err := protocol.NewSignalMessageFromBytes(buf, serialize.NewJSONSerializer().SignalMessage)
-	if err != nil {
-		logger.Debug("\n\nFailed to make message!\n", err)
-		return 0, err
-	}
-
-	dec, err := s.sessionCipher.Decrypt(msg)
-	if err != nil {
-		logger.Debug("\n\nFailed to decrypt!\n", err)
-		return 0, err
-	}
-
-	if len(dec) > len(buf) {
-		logger.Debug("\nRead: Buffer too large\n")
-		return 0, errors.New("Read: Buffer too large")
-	}
-
-	copy(buf, dec)
-	return total, nil
-}
-
+// Write encrypts the plaintext `in` data and sends it on the
+// secure connection.
 func (s *signalSession) Write(data []byte) (int, error) {
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
 
-	// return this if all is written
-	total := len(data)
+	var (
+		written int
+		cbuf    []byte
+		total   = len(data)
+	)
 
-	logger.Debug("\nTrying to write: ", string(data))
-
-	if buffersize < len(data) {
-		logger.Debug("\nWrite: Buffer too large\n")
-		return 0, errors.New("Write: Buffer too large")
+	if total < MaxPlaintextLength {
+		cbuf = pool.Get(total + poly1305.TagSize + LengthPrefixLength)
+	} else {
+		cbuf = pool.Get(MaxTransportMsgLength + LengthPrefixLength)
 	}
 
-	cmsg, err := s.sessionCipher.Encrypt(data)
-	if err != nil {
-		logger.Debug("\n\nFailed to encrypt!\n", err)
-		return 0, err
+	defer pool.Put(cbuf)
+
+	for written < total {
+		end := written + MaxPlaintextLength
+		if end > total {
+			end = total
+		}
+
+		b, err := s.encrypt(cbuf[:LengthPrefixLength], data[written:end])
+		if err != nil {
+			return 0, err
+		}
+
+		binary.BigEndian.PutUint16(b, uint16(len(b)-LengthPrefixLength))
+
+		_, err = s.writeMsgInsecure(b)
+		if err != nil {
+			return written, err
+		}
+		written = end
 	}
-
-	if buffersize < len(cmsg.Serialize()) {
-		logger.Debug("\nWrite: Encrypted Buffer too large\n")
-		return 0, errors.New("Write: Encrypted Buffer too large")
-	}
-
-	i, err := s.writeMsgInsecure(cmsg.Serialize())
-	if err != nil {
-		logger.Debug("\n\nFailed to write!\n", err)
-		return i, err
-	}
-
-	logger.Debug("\nSuccessfully wrote: ", string(data))
-
-	return total, nil
+	return written, nil
 }
 
 // TODO: consider long messages
