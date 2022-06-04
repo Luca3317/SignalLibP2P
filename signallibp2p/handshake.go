@@ -178,6 +178,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 		// Step 1: Read init. Message and process it
 		logger.Debug("\nHandshake-Listener\nStep 1: Reading initial Message\n")
+		logger.Debug("using updated")
 		if i, err := s.readNextInsecureMsgLen(); err != nil {
 			logger.Debug("\nFailed to read next msg len")
 		} else {
