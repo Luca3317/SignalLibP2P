@@ -3,7 +3,6 @@ package signallibp2p
 import (
 	"bufio"
 	"context"
-	"errors"
 	"net"
 	"sync"
 	"time"
@@ -141,8 +140,6 @@ func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, re
 		<-respCh
 		return nil, ctx.Err()
 	}
-
-	return nil, errors.New("newsignalsession not implemented")
 }
 
 func (s *signalSession) LocalAddr() net.Addr {
