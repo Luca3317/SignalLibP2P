@@ -90,13 +90,13 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 
 		// Step 4: Send init. message
-		i, err := s.writeMsgInsecure(message.Serialize())
+		_, err = s.writeMsgInsecure(message.Serialize())
 		if err != nil {
 			return err
 		}
 
 		// Step 5: Receive response; use payload as remote key
-		i, err = s.insecureConn.Read(hbuf)
+		_, err = s.insecureConn.Read(hbuf)
 		if err != nil {
 			return err
 		}
@@ -135,7 +135,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		i, err = s.writeMsgInsecure(ack.Serialize())
+		_, err = s.writeMsgInsecure(ack.Serialize())
 		if err != nil {
 			return err
 		}
@@ -151,7 +151,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		)
 
 		// Step 1: Read init. Message and process it
-		i, err := s.insecureConn.Read(hbuf)
+		_, err := s.insecureConn.Read(hbuf)
 		if err != nil {
 			return err
 		}
@@ -168,7 +168,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 		// Step 2: Create SessionCipher and decrypt init. message
 		s.sessionCipher = session.NewCipher(&s.sessionBuilder, remoteAddr)
-		msg, err := s.sessionCipher.Decrypt(receivedMessage.WhisperMessage())
+		_, err = s.sessionCipher.Decrypt(receivedMessage.WhisperMessage())
 		if err != nil {
 			return err
 		}
@@ -184,13 +184,13 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		i, err = s.writeMsgInsecure(response.Serialize())
+		_, err = s.writeMsgInsecure(response.Serialize())
 		if err != nil {
 			return err
 		}
 
 		// Step 5: Receive response; use payload as remote key
-		i, err = s.insecureConn.Read(hbuf)
+		_, err = s.insecureConn.Read(hbuf)
 		if err != nil {
 			return err
 		}
