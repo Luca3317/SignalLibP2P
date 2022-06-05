@@ -27,7 +27,7 @@ const buffersize = 10000
 	- Test this more
 	- Maybe add length prefixes to messages sent here as well
 	- Maybe further libp2p checks
-	- Very rarely, mac mismatch error
+	- Very rarely, seemingly random mac mismatch error
 
 	Steps
 	1. Dialer retrieves Prekey Bundle from "Server" (local drive)
@@ -39,7 +39,7 @@ const buffersize = 10000
 	7. Dialer receives and decrypts message, saves the remote public key
 	8. Handshake is finished
 */
-func (s *signalSession) Handshake(ctx context.Context) (err error) {
+func (s *signalSession) handshake(ctx context.Context) (err error) {
 
 	logger.Debug("\n\nHandshake enter data:\ninitiator: ", s.initiator,
 		"\nLocalAddr: ", s.insecureConn.LocalAddr().String(),

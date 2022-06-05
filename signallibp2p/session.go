@@ -122,7 +122,7 @@ func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, re
 	// write the result of the handshake to the respCh.
 	respCh := make(chan error, 1)
 	go func() {
-		respCh <- s.Handshake(ctx)
+		respCh <- s.handshake(ctx)
 	}()
 
 	select {
