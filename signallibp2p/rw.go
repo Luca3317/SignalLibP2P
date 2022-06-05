@@ -110,18 +110,27 @@ func (s *signalSession) Write(data []byte) (int, error) {
 			return 0, err
 		}
 
-		// TODO
+		/* // TODO
 		var prefixbuf [2]byte
 		sief := append(prefixbuf[:], b...)
-		binary.BigEndian.PutUint16(sief, uint16(len(sief)-LengthPrefixLength))
+		binary.BigEndian.PutUint16(sief, uint16(len(sief)-LengthPrefixLength)) */
 
-		_, err = s.writeMsgInsecure(sief)
+		_, err = s.writeMsgInsecure(s.prependLength(b))
 		if err != nil {
 			return written, err
 		}
 		written = end
 	}
 	return written, nil
+}
+
+// Returns the data array prepended with its own (non-prefixed) length
+// Original array is unchanged
+func (s *signalSession) prependLength(data []byte) (prefixedData []byte) {
+	var prefixbuf [LengthPrefixLength]byte
+	prefixedData = append(prefixbuf[:], data...)
+	binary.BigEndian.PutUint16(prefixedData, uint16(len(prefixedData)-LengthPrefixLength))
+	return prefixedData
 }
 
 // readNextInsecureMsgLen reads the length of the next message on the insecureConn channel.
