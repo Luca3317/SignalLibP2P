@@ -123,7 +123,9 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 
 		s.remoteKey = pubkey
-		s.remoteID = id
+		if s.remoteID != id {
+			return errors.New("Handshake: remote id mismatch")
+		}
 
 		// Step 6: Send Response Message
 		keyM, err := crypto.MarshalPublicKey(s.LocalPublicKey())
@@ -219,7 +221,9 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 
 		s.remoteKey = pubkey
-		s.remoteID = id
+		if s.remoteID != id {
+			return errors.New("Handshake: remote id mismatch")
+		}
 	}
 
 	logger.Debug("\nFinished Handshake\n\nExit data:\ninitiator: ", s.initiator,
