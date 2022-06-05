@@ -22,6 +22,23 @@ import (
 
 const buffersize = 10000
 
+/*	2-Message Handshake (appears to work fully)
+	TODO
+	- Test this more
+	- Maybe add length prefixes to messages sent here as well
+	- Maybe further libp2p checks
+	- Very rarely, mac mismatch error
+
+	Steps
+	1. Dialer retrieves Prekey Bundle from "Server" (local drive)
+	2. Dialer processes bundle
+	3. Dialer sends encrypted PreKeySignalMessage; payload is their local public key
+	4. Listener receives and processes the PreKeySignalMessage
+	5. Listener decrypts message and saves the remote public key
+	6. Listener sends encrypted SignalMessage; payload is their local public key
+	7. Dialer receives and decrypts message, saves the remote public key
+	8. Handshake is finished
+*/
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 	logger.Debug("\n\nHandshake enter data:\ninitiator: ", s.initiator,
@@ -41,8 +58,8 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 	}()
 
-	// set a deadline to complete the handshake, if one has been supplied.
-	// clear it after we're done.
+	// Set a deadline to complete the handshake, if one has been supplied.
+	// Clear it after we're done.
 	if deadline, ok := ctx.Deadline(); ok {
 		if err := s.SetDeadline(deadline); err == nil {
 			// schedule the deadline removal once we're done handshaking.
@@ -53,6 +70,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 	hbuf := pool.Get(buffersize)
 	defer pool.Put(hbuf)
 
+	// If this is the initiator
 	if s.initiator {
 
 		// Step 0: Preparations (including ReadBundle and session.NewBuilder)
@@ -210,7 +228,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 }
 
 /*
-	3 Step Handshake (works fully (i think))
+	3 Message Handshake (works fully (i think))
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 	logger.Debug("\n\nHandshake enter data:\ninitiator: ", s.initiator,
