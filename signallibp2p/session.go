@@ -50,8 +50,9 @@ type signalSession struct {
 	registrationID    uint32
 }
 
-// Assumes that regid and devid are only relevant locally to identify sessions etc
-// which is wrong since its included in bundles, idek man
+/* 	Creates a new secure Signal Session
+TODO: Possibly hardcode listener values (currently read from drive)
+*/
 func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, remote peer.ID, initiator bool) (*signalSession, error) {
 
 	// TODO: FINISH INITIALIZING S (SIGNALSESSION)

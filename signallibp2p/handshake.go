@@ -26,8 +26,8 @@ const buffersize = 10000
 	TODO
 	- Test this more
 	- Maybe add length prefixes to messages sent here as well
-	- Maybe further libp2p checks
-	- Very rarely, seemingly random mac mismatch error
+	- Maybe hardcode values retrieved from drive right now
+	- Very rarely, seemingly random mac mismatch error (fixed?)
 
 	Steps
 	1. Dialer retrieves Prekey Bundle from "Server" (local drive)
