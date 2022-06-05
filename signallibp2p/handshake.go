@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Luca3317/libsignalcopy/keys/prekey"
+	"github.com/Luca3317/libsignalcopy/logger"
 	"github.com/Luca3317/libsignalcopy/protocol"
 	"github.com/Luca3317/libsignalcopy/serialize"
 	"github.com/Luca3317/libsignalcopy/session"
@@ -161,10 +162,12 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		_, err = s.sessionBuilder.Process(receivedMessage)
+		unsignedPreKeyID, err := s.sessionBuilder.Process(receivedMessage)
 		if err != nil {
+			logger.Debug("failed to process")
 			return err
 		}
+		logger.Debug("Succesfully processed ", unsignedPreKeyID)
 
 		// Step 2: Create SessionCipher and decrypt init. message
 		s.sessionCipher = session.NewCipher(&s.sessionBuilder, remoteAddr)
