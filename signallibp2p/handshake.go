@@ -221,9 +221,7 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 		}
 
 		s.remoteKey = pubkey
-		if s.remoteID != id {
-			return errors.New("Handshake: remote id mismatch")
-		}
+		s.remoteID = id
 	}
 
 	logger.Debug("\nFinished Handshake\n\nExit data:\ninitiator: ", s.initiator,
