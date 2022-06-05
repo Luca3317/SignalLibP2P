@@ -23,15 +23,15 @@ const buffersize = 10000
 
 func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
-	logger.Debug("\n\nHandshake enter data:\ninitiator: ", s.initiator,
-		"\nLocalAddr: ", s.insecureConn.LocalAddr().String(),
-		"\nRemoteAddr: ", s.insecureConn.RemoteAddr().String(),
-		"\nNetworkName: ", s.insecureConn.LocalAddr().Network(),
-		"\n(RemoteNetworkName: ", s.insecureConn.RemoteAddr().Network(), ")",
-		"\nLocalPeer: ", s.LocalPeer(),
-		"\nRemotePeer: ", s.RemotePeer(),
-		"\nLocalPrivKey: ", s.LocalPrivateKey(),
-		"\nRemotePubKey: ", s.RemotePublicKey(), "\n\n\n")
+	/* 	logger.Debug("\n\nHandshake enter data:\ninitiator: ", s.initiator,
+	"\nLocalAddr: ", s.insecureConn.LocalAddr().String(),
+	"\nRemoteAddr: ", s.insecureConn.RemoteAddr().String(),
+	"\nNetworkName: ", s.insecureConn.LocalAddr().Network(),
+	"\n(RemoteNetworkName: ", s.insecureConn.RemoteAddr().Network(), ")",
+	"\nLocalPeer: ", s.LocalPeer(),
+	"\nRemotePeer: ", s.RemotePeer(),
+	"\nLocalPrivKey: ", s.LocalPrivateKey(),
+	"\nRemotePubKey: ", s.RemotePublicKey(), "\n\n\n") */
 
 	defer func() {
 		if rerr := recover(); rerr != nil {
@@ -279,27 +279,17 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 		s.remoteKey = pubkey
 		s.remoteID = id
-
-		/* 		logger.Debug("Im leaving my handshake\n")
-		   		logger.Debug("First sending test message\n")
-		   		i, err = s.Write(append([]byte("My test message... wwhats up"), 0))
-		   		if err != nil {
-		   			logger.Debug("I failed to write for some reason\n")
-		   			logger.Debug(err)
-		   		} else {
-		   			logger.Debug("Did it !\n")
-		   		} */
 	}
-
-	logger.Debug("\nFinished Handshake\n\nExit data:\ninitiator: ", s.initiator,
-		"\nLocalAddr: ", s.insecureConn.LocalAddr().String(),
-		"\nRemoteAddr: ", s.insecureConn.RemoteAddr().String(),
-		"\nNetworkName: ", s.insecureConn.LocalAddr().Network(),
-		"\n(RemoteNetworkName: ", s.insecureConn.RemoteAddr().Network(), ")",
-		"\nLocalPeer: ", s.LocalPeer(),
-		"\nRemotePeer: ", s.RemotePeer(),
-		"\nLocalPrivKey: ", s.LocalPrivateKey(),
-		"\nRemotePubKey: ", s.RemotePublicKey(), "\n\n\n")
+	/*
+		logger.Debug("\nFinished Handshake\n\nExit data:\ninitiator: ", s.initiator,
+			"\nLocalAddr: ", s.insecureConn.LocalAddr().String(),
+			"\nRemoteAddr: ", s.insecureConn.RemoteAddr().String(),
+			"\nNetworkName: ", s.insecureConn.LocalAddr().Network(),
+			"\n(RemoteNetworkName: ", s.insecureConn.RemoteAddr().Network(), ")",
+			"\nLocalPeer: ", s.LocalPeer(),
+			"\nRemotePeer: ", s.RemotePeer(),
+			"\nLocalPrivKey: ", s.LocalPrivateKey(),
+			"\nRemotePubKey: ", s.RemotePublicKey(), "\n\n\n") */
 
 	return nil
 }
