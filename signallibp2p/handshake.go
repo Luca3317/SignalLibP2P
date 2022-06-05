@@ -82,6 +82,195 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 			return err
 		}
 
+		// Step 3: Create SessionCipher and encrypt message containing the local public key
+		s.sessionCipher = session.NewCipher(&s.sessionBuilder, remoteAddr)
+		plaintextKey, err := crypto.MarshalPublicKey(s.LocalPublicKey())
+		if err != nil {
+			return err
+		}
+
+		message, err := s.sessionCipher.Encrypt(plaintextKey)
+		if err != nil {
+			return err
+		}
+
+		// Step 4: Send (initiating) message
+		_, err = s.writeMsgInsecure(message.Serialize())
+		if err != nil {
+			return err
+		}
+
+		// Step 5: Receive response; use payload as remote key
+		_, err = s.insecureConn.Read(hbuf)
+		if err != nil {
+			return err
+		}
+
+		response, err := protocol.NewSignalMessageFromBytes(hbuf[:strings.IndexByte(string(hbuf), 0)], serialize.NewJSONSerializer().SignalMessage)
+		if err != nil {
+			return err
+		}
+
+		deResponse, err := s.sessionCipher.Decrypt(response)
+		if err != nil {
+			return err
+		}
+
+		pubkey, err := crypto.UnmarshalPublicKey(deResponse)
+		if err != nil {
+			return err
+		}
+
+		id, err := peer.IDFromPublicKey(pubkey)
+		if err != nil {
+			return err
+		}
+
+		s.remoteKey = pubkey
+		if s.remoteID != id {
+			return errors.New("Handshake: remote id mismatch")
+		}
+
+	} else {
+
+		// Step 0: Preparations
+		remoteAddr := protocol.NewSignalAddress("dialer", 2)
+
+		s.sessionBuilder = *session.NewBuilder(
+			&s.sessionStore, &s.prekeyStore, &s.signedprekeyStore, &s.identityStore,
+			remoteAddr, s.sessionStore.serializer,
+		)
+
+		// Step 1: Read init. Message and process it
+		_, err := s.insecureConn.Read(hbuf)
+		if err != nil {
+			return err
+		}
+
+		receivedMessage, err := protocol.NewPreKeySignalMessageFromBytes(hbuf[:strings.IndexByte(string(hbuf), 0)], serialize.NewJSONSerializer().PreKeySignalMessage, serialize.NewJSONSerializer().SignalMessage)
+		if err != nil {
+			return err
+		}
+
+		unsignedPreKeyID, err := s.sessionBuilder.Process(receivedMessage)
+		if err != nil {
+			logger.Debug("failed to process")
+			return err
+		}
+		logger.Debug("Succesfully processed ", unsignedPreKeyID)
+
+		// Step 2: Create SessionCipher and decrypt init. message; use payload as remote public key
+		s.sessionCipher = session.NewCipher(&s.sessionBuilder, remoteAddr)
+		deMsg, err := s.sessionCipher.Decrypt(receivedMessage.WhisperMessage())
+		if err != nil {
+			return err
+		}
+
+		pubkey, err := crypto.UnmarshalPublicKey(deMsg)
+		if err != nil {
+			return err
+		}
+
+		id, err := peer.IDFromPublicKey(pubkey)
+		if err != nil {
+			return err
+		}
+
+		s.remoteKey = pubkey
+		s.remoteID = id
+
+		// Step 3: Send Response Message, payload containing own public key
+		keyM, err := crypto.MarshalPublicKey(s.LocalPublicKey())
+		if err != nil {
+			return err
+		}
+
+		response, err := s.sessionCipher.Encrypt(keyM)
+		if err != nil {
+			return err
+		}
+
+		_, err = s.writeMsgInsecure(response.Serialize())
+		if err != nil {
+			return err
+		}
+	}
+
+	logger.Debug("\nFinished Handshake\n\nExit data:\ninitiator: ", s.initiator,
+		"\nLocalAddr: ", s.insecureConn.LocalAddr().String(),
+		"\nRemoteAddr: ", s.insecureConn.RemoteAddr().String(),
+		"\nNetworkName: ", s.insecureConn.LocalAddr().Network(),
+		"\n(RemoteNetworkName: ", s.insecureConn.RemoteAddr().Network(), ")",
+		"\nLocalPeer: ", s.LocalPeer(),
+		"\nRemotePeer: ", s.RemotePeer(),
+		"\nLocalPrivKey: ", s.LocalPrivateKey(),
+		"\nRemotePubKey: ", s.RemotePublicKey(), "\n\n\n")
+
+	return nil
+}
+
+/*
+	3 Step Handshake (works fully (i think))
+func (s *signalSession) Handshake(ctx context.Context) (err error) {
+
+	logger.Debug("\n\nHandshake enter data:\ninitiator: ", s.initiator,
+		"\nLocalAddr: ", s.insecureConn.LocalAddr().String(),
+		"\nRemoteAddr: ", s.insecureConn.RemoteAddr().String(),
+		"\nNetworkName: ", s.insecureConn.LocalAddr().Network(),
+		"\n(RemoteNetworkName: ", s.insecureConn.RemoteAddr().Network(), ")",
+		"\nLocalPeer: ", s.LocalPeer(),
+		"\nRemotePeer: ", s.RemotePeer(),
+		"\nLocalPrivKey: ", s.LocalPrivateKey(),
+		"\nRemotePubKey: ", s.RemotePublicKey(), "\n\n\n")
+
+	defer func() {
+		if rerr := recover(); rerr != nil {
+			fmt.Fprintf(os.Stderr, "caught panic: %s\n%s\n", rerr, debug.Stack())
+			err = fmt.Errorf("panic in Signal handshake: %s", rerr)
+		}
+	}()
+
+	// set a deadline to complete the handshake, if one has been supplied.
+	// clear it after we're done.
+	if deadline, ok := ctx.Deadline(); ok {
+		if err := s.SetDeadline(deadline); err == nil {
+			// schedule the deadline removal once we're done handshaking.
+			defer s.SetDeadline(time.Time{})
+		}
+	}
+
+	hbuf := pool.Get(buffersize)
+	defer pool.Put(hbuf)
+
+	if s.initiator {
+
+		// Step 0: Preparations (including ReadBundle and session.NewBuilder)
+		retr, err := retrievable.ReadBundle()
+		if err != nil {
+			return errors.New("Failed to read bundle:" + err.Error())
+		}
+
+		remoteAddr := protocol.NewSignalAddress("listener", 1)
+		s.sessionBuilder = *session.NewBuilder(
+			&s.sessionStore, &s.prekeyStore, &s.signedprekeyStore, &s.identityStore,
+			remoteAddr, s.sessionStore.serializer,
+		)
+
+		// Step 1: "Retrieve Bundle from server"
+		retrievedBundle := prekey.NewBundle(
+			retr.Ids.RegID, retr.Ids.DevID,
+			retr.PreKey.ID(), retr.SignedPreKey.ID(),
+			retr.PreKey.KeyPair().PublicKey(), retr.SignedPreKey.KeyPair().PublicKey(),
+			retr.SignedPreKey.Signature(),
+			retr.IdentityKeyPair.PublicKey(),
+		)
+
+		// Step 2: Process retrieved Bundle
+		err = s.sessionBuilder.ProcessBundle(retrievedBundle)
+		if err != nil {
+			return err
+		}
+
 		// Step 3: Create SessionCipher and encrypt init. message
 		s.sessionCipher = session.NewCipher(&s.sessionBuilder, remoteAddr)
 		plaintext := []byte("Hallo!")
@@ -236,3 +425,4 @@ func (s *signalSession) Handshake(ctx context.Context) (err error) {
 
 	return nil
 }
+*/
