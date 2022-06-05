@@ -30,13 +30,13 @@ func New(privkey crypto.PrivKey) (*Transport, error) {
 	}, nil
 }
 
-// SecureInbound runs the Noise handshake as the responder.
+// SecureInbound runs the Signal handshake as the responder.
 // If p is empty, connections from any peer are accepted.
 func (t *Transport) SecureInbound(ctx context.Context, insecure net.Conn, p peer.ID) (sec.SecureConn, error) {
 	return newSignalSession(t, ctx, insecure, p, false)
 }
 
-// SecureOutbound runs the Noise handshake as the initiator.
+// SecureOutbound runs the Signal handshake as the initiator.
 func (t *Transport) SecureOutbound(ctx context.Context, insecure net.Conn, p peer.ID) (sec.SecureConn, error) {
 	return newSignalSession(t, ctx, insecure, p, true)
 }
