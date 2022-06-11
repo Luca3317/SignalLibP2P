@@ -123,7 +123,7 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		_, err = s.readNextMsgInsecure(hbuf[:msglen])
+		err = s.readNextMsgInsecure(hbuf[:msglen])
 		if err != nil {
 			return err
 		}
@@ -169,7 +169,7 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		_, err = s.readNextMsgInsecure(hbuf[:msglen])
+		err = s.readNextMsgInsecure(hbuf[:msglen])
 		if err != nil {
 			return err
 		}
