@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
-	"strings"
 	"time"
 
 	"github.com/Luca3317/libsignalcopy/keys/prekey"
@@ -113,18 +112,23 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 		}
 
 		// Step 4: Send (initiating) message
-		_, err = s.writeMsgInsecure(message.Serialize())
+		_, err = s.writeMsgInsecure(s.prependLength(message.Serialize()))
 		if err != nil {
 			return err
 		}
 
 		// Step 5: Receive response; use payload as remote key
-		_, err = s.insecureConn.Read(hbuf)
+		msglen, err := s.readNextInsecureMsgLen()
 		if err != nil {
 			return err
 		}
 
-		response, err := protocol.NewSignalMessageFromBytes(hbuf[:strings.IndexByte(string(hbuf), 0)], serialize.NewJSONSerializer().SignalMessage)
+		_, err = s.readNextMsgInsecure(hbuf[:msglen])
+		if err != nil {
+			return err
+		}
+
+		response, err := protocol.NewSignalMessageFromBytes(hbuf[:msglen], serialize.NewJSONSerializer().SignalMessage)
 		if err != nil {
 			return err
 		}
@@ -160,12 +164,17 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 		)
 
 		// Step 1: Read init. Message and process it
-		_, err := s.insecureConn.Read(hbuf)
+		msglen, err := s.readNextInsecureMsgLen()
 		if err != nil {
 			return err
 		}
 
-		receivedMessage, err := protocol.NewPreKeySignalMessageFromBytes(hbuf[:strings.IndexByte(string(hbuf), 0)], serialize.NewJSONSerializer().PreKeySignalMessage, serialize.NewJSONSerializer().SignalMessage)
+		_, err = s.readNextMsgInsecure(hbuf[:msglen])
+		if err != nil {
+			return err
+		}
+
+		receivedMessage, err := protocol.NewPreKeySignalMessageFromBytes(hbuf[:msglen], serialize.NewJSONSerializer().PreKeySignalMessage, serialize.NewJSONSerializer().SignalMessage)
 		if err != nil {
 			return err
 		}
@@ -207,7 +216,7 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		_, err = s.writeMsgInsecure(response.Serialize())
+		_, err = s.writeMsgInsecure(s.prependLength(response.Serialize()))
 		if err != nil {
 			return err
 		}
