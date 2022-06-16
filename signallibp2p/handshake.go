@@ -78,7 +78,7 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 			return errors.New("Failed to read bundle:" + err.Error())
 		}
 
-		remoteAddr := protocol.NewSignalAddress("listener", 1)
+		remoteAddr := protocol.NewSignalAddress("listener", retr.Ids.DevID)
 		s.sessionBuilder = *session.NewBuilder(
 			&s.sessionStore, &s.prekeyStore, &s.signedprekeyStore, &s.identityStore,
 			remoteAddr, s.sessionStore.serializer,
