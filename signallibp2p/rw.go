@@ -99,11 +99,6 @@ func (s *signalSession) Write(data []byte) (int, error) {
 			return 0, err
 		}
 
-		/* // TODO
-		var prefixbuf [2]byte
-		sief := append(prefixbuf[:], b...)
-		binary.BigEndian.PutUint16(sief, uint16(len(sief)-LengthPrefixLength)) */
-
 		_, err = s.writeMsgInsecure(s.prependLength(b))
 		if err != nil {
 			return written, err

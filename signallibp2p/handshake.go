@@ -25,18 +25,16 @@ const payloadPrefix = "signal-libp2p-static-key:"
 
 /*	2-Message Handshake (appears to work fully)
 	TODO
-	- Test this more
-	- Maybe add length prefixes to messages sent here as well
 	- Maybe hardcode values retrieved from drive right now
-	- Very rarely, seemingly random mac mismatch error (fixed?)
+	- Rarely, seemingly random mac mismatch error (occurs after multiple r/ws though)
 
 	Steps
 	1. Dialer retrieves Prekey Bundle from "Server" (local drive)
 	2. Dialer processes bundle
-	3. Dialer sends encrypted PreKeySignalMessage; payload is their local public key
+	3. Dialer sends encrypted PreKeySignalMessage; payload is local public key and signature
 	4. Listener receives and processes the PreKeySignalMessage
 	5. Listener decrypts message and saves the remote public key
-	6. Listener sends encrypted SignalMessage; payload is their local public key
+	6. Listener sends encrypted SignalMessage; payload is local public key and signature
 	7. Dialer receives and decrypts message, saves the remote public key
 	8. Handshake is finished
 */

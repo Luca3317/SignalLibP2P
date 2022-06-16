@@ -33,14 +33,11 @@ type signalSession struct {
 	writeLock sync.Mutex
 
 	insecureConn   net.Conn
-	insecureReader *bufio.Reader // to cushion io read syscalls
-	// we don't buffer writes to avoid introducing latency; optimisation possible. // TODO revisit
-
-	// TODO: these are for the insecure rw fucntions
-	// which might be wrong for signal
-	qseek int     // queued bytes seek value.
-	qbuf  []byte  // queued bytes buffer.
-	rlen  [2]byte // work buffer to read in the incoming message length.
+	insecureReader *bufio.Reader 
+	
+	qseek int     
+	qbuf  []byte  
+	rlen  [2]byte 
 
 	// These might belong in transport; Irrelevant for testing
 	prekeyStore       InMemoryPreKey
@@ -50,12 +47,8 @@ type signalSession struct {
 	registrationID    uint32
 }
 
-/* 	Creates a new secure Signal Session
-TODO: Possibly hardcode listener values (currently read from drive)
-*/
 func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, remote peer.ID, initiator bool) (*signalSession, error) {
 
-	// TODO: FINISH INITIALIZING S (SIGNALSESSION)
 	s := &signalSession{
 		initiator: initiator,
 
