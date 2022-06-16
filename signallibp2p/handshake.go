@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
-	"strconv"
 	"time"
 
 	"github.com/Luca3317/libsignalcopy/keys/prekey"
 	"github.com/Luca3317/libsignalcopy/logger"
 	"github.com/Luca3317/libsignalcopy/protocol"
-	"github.com/Luca3317/libsignalcopy/serialize"
 	"github.com/Luca3317/libsignalcopy/session"
 	"github.com/Luca3317/libsignalcopy/util/retrievable"
 	pool "github.com/libp2p/go-buffer-pool"
@@ -20,10 +18,13 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
+var expectedKeySize int
+
 const buffersize = 10000
+
 const payloadPrefix = "signal-libp2p-static-key:"
 
-/*	2-Message Handshake (appears to work fully)
+/*	2-Message Handshake
 	TODO
 	- Maybe hardcode values retrieved from drive right now
 	- Rarely, seemingly random mac mismatch error (occurs after multiple r/ws though)
@@ -69,6 +70,11 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 	hbuf := pool.Get(buffersize)
 	defer pool.Put(hbuf)
 
+	payload, err := s.generatePublicKeyPayload()
+	if err != nil {
+		return err
+	}
+
 	// If this is the initiator
 	if s.initiator {
 
@@ -102,23 +108,9 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 		// Step 3: Create SessionCipher and encrypt payload containing public key as well as signature
 		s.sessionCipher = session.NewCipher(&s.sessionBuilder, remoteAddr)
 
-		payload, err := s.generatePublicKeyPayload()
-		if err != nil {
-			return err
-		}
-
 		message, err := s.sessionCipher.Encrypt(payload)
 		if err != nil {
 			return err
-		}
-
-		f, err := os.OpenFile("len", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-		if err != nil {
-			panic(err)
-		}
-		defer f.Close()
-		if _, err := f.WriteString(strconv.Itoa(len(payload)) + ":" + strconv.Itoa(len(message.Serialize())) + "\n"); err != nil {
-			panic(err)
 		}
 
 		// Step 4: Send (initiating) message
@@ -138,7 +130,7 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		response, err := protocol.NewSignalMessageFromBytes(hbuf[:msglen], serialize.NewJSONSerializer().SignalMessage)
+		response, err := protocol.NewSignalMessageFromBytes(hbuf[:msglen], serializer.SignalMessage)
 		if err != nil {
 			return err
 		}
@@ -174,7 +166,7 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		receivedMessage, err := protocol.NewPreKeySignalMessageFromBytes(hbuf[:msglen], serialize.NewJSONSerializer().PreKeySignalMessage, serialize.NewJSONSerializer().SignalMessage)
+		receivedMessage, err := protocol.NewPreKeySignalMessageFromBytes(hbuf[:msglen], serializer.PreKeySignalMessage, serializer.SignalMessage)
 		if err != nil {
 			return err
 		}
@@ -198,11 +190,6 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 		}
 
 		// Step 3: Send Response Message, payload containing own public key
-		payload, err := s.generatePublicKeyPayload()
-		if err != nil {
-			return err
-		}
-
 		response, err := s.sessionCipher.Encrypt(payload)
 		if err != nil {
 			return err
@@ -227,14 +214,13 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 	return nil
 }
 
+// Returns the marshalled local public key appended to a signature
 func (s *signalSession) generatePublicKeyPayload() ([]byte, error) {
 	plaintextKey, err := crypto.MarshalPublicKey(s.LocalPublicKey())
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal public key: %w", err)
 	}
-	if len(plaintextKey) != 299 {
-		return nil, errors.New("plaintextKey was not 299 bytes long!")
-	}
+	expectedKeySize = len(plaintextKey)
 
 	toSign := append([]byte(payloadPrefix), plaintextKey...)
 	signed, err := s.localKey.Sign(toSign)
@@ -247,7 +233,7 @@ func (s *signalSession) generatePublicKeyPayload() ([]byte, error) {
 }
 
 func (s *signalSession) handlePublicKeyPayload(payload []byte) error {
-	remoteKeySerialized := payload[:299]
+	remoteKeySerialized := payload[:expectedKeySize]
 	remoteKey, err := crypto.UnmarshalPublicKey(remoteKeySerialized)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal public key: %w", err)
@@ -268,7 +254,7 @@ func (s *signalSession) handlePublicKeyPayload(payload []byte) error {
 	}
 
 	msg := append([]byte(payloadPrefix), remoteKeySerialized...)
-	ok, err := remoteKey.Verify(msg, payload[299:])
+	ok, err := remoteKey.Verify(msg, payload[expectedKeySize:])
 	if err != nil {
 		return fmt.Errorf("failed to verify remotekey: %w", err)
 	} else if !ok {

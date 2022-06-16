@@ -7,6 +7,8 @@ import (
 	"github.com/Luca3317/libsignalcopy/serialize"
 )
 
+var serializer *serialize.Serializer = serialize.NewProtoBufSerializer()
+
 func (s *signalSession) encrypt(plaintext []byte) ([]byte, error) {
 	if s.sessionCipher == nil {
 		return nil, errors.New("Cannot encrypt; handshake incomplete")
@@ -25,7 +27,7 @@ func (s *signalSession) decrypt(ciphertext []byte) ([]byte, error) {
 		return nil, errors.New("Cannot decrypt; handshake incomplete")
 	}
 
-	msg, err := protocol.NewSignalMessageFromBytes(ciphertext, serialize.NewJSONSerializer().SignalMessage)
+	msg, err := protocol.NewSignalMessageFromBytes(ciphertext, serializer.SignalMessage)
 	if err != nil {
 		return nil, err
 	}

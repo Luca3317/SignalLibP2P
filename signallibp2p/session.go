@@ -9,7 +9,6 @@ import (
 
 	"github.com/Luca3317/libsignalcopy/keys/identity"
 	"github.com/Luca3317/libsignalcopy/logger"
-	"github.com/Luca3317/libsignalcopy/serialize"
 	"github.com/Luca3317/libsignalcopy/session"
 	"github.com/Luca3317/libsignalcopy/state/record"
 	"github.com/Luca3317/libsignalcopy/util/keyhelper"
@@ -33,11 +32,11 @@ type signalSession struct {
 	writeLock sync.Mutex
 
 	insecureConn   net.Conn
-	insecureReader *bufio.Reader 
-	
-	qseek int     
-	qbuf  []byte  
-	rlen  [2]byte 
+	insecureReader *bufio.Reader
+
+	qseek int
+	qbuf  []byte
+	rlen  [2]byte
 
 	// These might belong in transport; Irrelevant for testing
 	prekeyStore       InMemoryPreKey
@@ -54,7 +53,7 @@ func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, re
 
 		prekeyStore:       *NewInMemoryPreKey(),
 		signedprekeyStore: *NewInMemorySignedPreKey(),
-		sessionStore:      *NewInMemorySession(serialize.NewJSONSerializer()),
+		sessionStore:      *NewInMemorySession(serializer),
 		registrationID:    keyhelper.GenerateRegistrationID(),
 
 		localID:  tpt.localID,
@@ -81,14 +80,14 @@ func newSignalSession(tpt *Transport, ctx context.Context, insecure net.Conn, re
 			return nil, err
 		}
 
-		prekeys, err := keyhelper.GeneratePreKeys(0, 1, serialize.NewJSONSerializer().PreKeyRecord)
+		prekeys, err := keyhelper.GeneratePreKeys(0, 1, serializer.PreKeyRecord)
 		if err != nil {
 			logger.Debug("\nFailed to generate Prekey\n")
 			return nil, err
 		}
 		prekey = prekeys[0]
 
-		sigPreKey, err = keyhelper.GenerateSignedPreKey(identity, 0, serialize.NewJSONSerializer().SignedPreKeyRecord)
+		sigPreKey, err = keyhelper.GenerateSignedPreKey(identity, 0, serializer.SignedPreKeyRecord)
 		if err != nil {
 			logger.Debug("\nFailed to generate SignedPrekey\n")
 			return nil, err
