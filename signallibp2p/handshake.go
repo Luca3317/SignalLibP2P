@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
+	"strconv"
 	"time"
 
 	"github.com/Luca3317/libsignalcopy/keys/prekey"
@@ -20,6 +21,7 @@ import (
 )
 
 const buffersize = 10000
+const payloadPrefix = "signal-libp2p-static-key:"
 
 /*	2-Message Handshake (appears to work fully)
 	TODO
@@ -99,16 +101,26 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		// Step 3: Create SessionCipher and encrypt message containing the local public key
+		// Step 3: Create SessionCipher and encrypt payload containing public key as well as signature
 		s.sessionCipher = session.NewCipher(&s.sessionBuilder, remoteAddr)
-		plaintextKey, err := crypto.MarshalPublicKey(s.LocalPublicKey())
+
+		payload, err := s.generatePublicKeyPayload()
 		if err != nil {
 			return err
 		}
 
-		message, err := s.sessionCipher.Encrypt(plaintextKey)
+		message, err := s.sessionCipher.Encrypt(payload)
 		if err != nil {
 			return err
+		}
+
+		f, err := os.OpenFile("len", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close()
+		if _, err := f.WriteString(strconv.Itoa(len(payload)) + ":" + strconv.Itoa(len(message.Serialize())) + "\n"); err != nil {
+			panic(err)
 		}
 
 		// Step 4: Send (initiating) message
@@ -138,19 +150,9 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		pubkey, err := crypto.UnmarshalPublicKey(deResponse)
+		err = s.handlePublicKeyPayload(deResponse)
 		if err != nil {
 			return err
-		}
-
-		id, err := peer.IDFromPublicKey(pubkey)
-		if err != nil {
-			return err
-		}
-
-		s.remoteKey = pubkey
-		if s.remoteID != id {
-			return errors.New("Handshake: remote id mismatch")
 		}
 
 	} else {
@@ -192,26 +194,18 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 			return err
 		}
 
-		pubkey, err := crypto.UnmarshalPublicKey(deMsg)
+		err = s.handlePublicKeyPayload(deMsg)
 		if err != nil {
 			return err
 		}
-
-		id, err := peer.IDFromPublicKey(pubkey)
-		if err != nil {
-			return err
-		}
-
-		s.remoteKey = pubkey
-		s.remoteID = id
 
 		// Step 3: Send Response Message, payload containing own public key
-		keyM, err := crypto.MarshalPublicKey(s.LocalPublicKey())
+		payload, err := s.generatePublicKeyPayload()
 		if err != nil {
 			return err
 		}
 
-		response, err := s.sessionCipher.Encrypt(keyM)
+		response, err := s.sessionCipher.Encrypt(payload)
 		if err != nil {
 			return err
 		}
@@ -232,6 +226,59 @@ func (s *signalSession) handshake(ctx context.Context) (err error) {
 	"\nLocalPrivKey: ", s.LocalPrivateKey(),
 	"\nRemotePubKey: ", s.RemotePublicKey(), "\n\n\n") */
 
+	return nil
+}
+
+func (s *signalSession) generatePublicKeyPayload() ([]byte, error) {
+	plaintextKey, err := crypto.MarshalPublicKey(s.LocalPublicKey())
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal public key: %w", err)
+	}
+	if len(plaintextKey) != 299 {
+		return nil, errors.New("plaintextKey was not 299 bytes long!")
+	}
+
+	toSign := append([]byte(payloadPrefix), plaintextKey...)
+	signed, err := s.localKey.Sign(toSign)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign key %w:", err)
+	}
+
+	payload := append(plaintextKey, signed...)
+	return payload, nil
+}
+
+func (s *signalSession) handlePublicKeyPayload(payload []byte) error {
+	remoteKeySerialized := payload[:299]
+	remoteKey, err := crypto.UnmarshalPublicKey(remoteKeySerialized)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal public key: %w", err)
+	}
+
+	id, err := peer.IDFromPublicKey(remoteKey)
+	if err != nil {
+		return err
+	}
+
+	// copied from noise
+	// check the peer ID for:
+	// * all outbound connection
+	// * inbound connections, if we know which peer we want to connect to (SecureInbound called with a peer ID)
+	if (s.initiator && s.remoteID != id) || (!s.initiator && s.remoteID != "" && s.remoteID != id) {
+		// use Pretty() as it produces the full b58-encoded string, rather than abbreviated forms.
+		return fmt.Errorf("peer id mismatch: expected %s, but remote key matches %s", s.remoteID.Pretty(), id.Pretty())
+	}
+
+	msg := append([]byte(payloadPrefix), remoteKeySerialized...)
+	ok, err := remoteKey.Verify(msg, payload[299:])
+	if err != nil {
+		return fmt.Errorf("failed to verify remotekey: %w", err)
+	} else if !ok {
+		return errors.New("remote signature of public key invalid!")
+	}
+
+	s.remoteKey = remoteKey
+	s.remoteID = id
 	return nil
 }
 

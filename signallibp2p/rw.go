@@ -5,7 +5,6 @@ import (
 	"io"
 
 	pool "github.com/libp2p/go-buffer-pool"
-	"golang.org/x/crypto/poly1305"
 )
 
 const MaxPlaintextLength = 32768
@@ -86,18 +85,8 @@ func (s *signalSession) Write(data []byte) (int, error) {
 
 	var (
 		written int
-		cbuf    []byte
 		total   = len(data)
 	)
-
-	// TODO replace case 1, check how big metadata is for ciphertext compared to plaintext
-	if total < MaxPlaintextLength {
-		cbuf = pool.Get(total + poly1305.TagSize + LengthPrefixLength)
-	} else {
-		cbuf = pool.Get(MaxTransportMsgLength + LengthPrefixLength)
-	}
-
-	defer pool.Put(cbuf)
 
 	for written < total {
 		end := written + MaxPlaintextLength
